@@ -646,8 +646,8 @@ class MainWindow(QMainWindow):
         sidebar_layout.setContentsMargins(16, 16, 16, 16)
         
         # Application Title / Brand
-        brand_lbl = QLabel("DOLA AI REMOVER")
-        brand_lbl.setStyleSheet("font-size: 20px; font-weight: 800; color: #5d5fef; letter-spacing: 1px; margin-bottom: 2px;")
+        brand_lbl = QLabel("DOLA AI Watermark Remover")
+        brand_lbl.setStyleSheet("font-size: 19px; font-weight: 800; color: #5d5fef; letter-spacing: 0.5px; margin-bottom: 2px;")
         sidebar_layout.addWidget(brand_lbl)
         
         sub_lbl = QLabel("Developed by <a href='https://talhashaikh.com' style='color:#a5b4fc; text-decoration:none; font-weight:bold;'>Talha Shaikh</a> &bull; <a href='https://talhashaikh.com' style='color:#6366f1; text-decoration:none;'>talhashaikh.com</a>")

@@ -405,9 +405,9 @@ class AuthDialog(QDialog):
         brand_icon.setFont(QFont("Segoe UI", 24))
         
         brand_info = QVBoxLayout()
-        brand_title = QLabel("DOLA AI REMOVER")
+        brand_title = QLabel("DOLA AI Watermark Remover")
         brand_title.setProperty("class", "title-label")
-        brand_title.setFont(QFont("Segoe UI", 16, QFont.Weight.Bold))
+        brand_title.setFont(QFont("Segoe UI", 15, QFont.Weight.Bold))
         
         brand_sub = QLabel("Developed by <b>Talha Shaikh</b> &bull; <a href='https://talhashaikh.com' style='color:#a5b4fc; text-decoration:none;'>talhashaikh.com</a>")
         brand_sub.setTextFormat(Qt.TextFormat.RichText)
