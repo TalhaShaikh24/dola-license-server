@@ -26,9 +26,9 @@ def main():
                 # User closed the auth dialog without activating
                 sys.exit(0)
         
-        # Create and display the main window
+        # Create and display the main window in full screen (maximized) by default
         window = MainWindow()
-        window.show()
+        window.showMaximized()
         
         # Start the Qt event loop
         sys.exit(app.exec())

@@ -23,6 +23,28 @@ DARK_STYLESHEET = """
 QMainWindow {
     background-color: #0f0f12;
 }
+QWidget#customTitleBar {
+    background-color: #0d0f17;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+QPushButton#titleBarBtnMin, QPushButton#titleBarBtnMax, QPushButton#titleBarBtnClose {
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    color: #9ca3af;
+    font-size: 13px;
+    font-weight: bold;
+    padding: 0;
+    margin: 4px 2px;
+}
+QPushButton#titleBarBtnMin:hover, QPushButton#titleBarBtnMax:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+}
+QPushButton#titleBarBtnClose:hover {
+    background-color: #e11d48;
+    color: #ffffff;
+}
 QWidget {
     color: #e2e2e9;
     font-family: 'Segoe UI', -apple-system, Roboto, sans-serif;
@@ -602,6 +624,96 @@ class PreviewDialog(QDialog):
         layout.addWidget(btn_close)
 
 
+class CustomTitleBar(QWidget):
+    """
+    Sleek, customizable frameless window title bar with drag support,
+    maximize/restore toggle, minimize, and close warning confirmation.
+    """
+    def __init__(self, parent: QMainWindow):
+        super().__init__(parent)
+        self.parent_window = parent
+        self.drag_position = None
+        self.setFixedHeight(44)
+        self.setObjectName("customTitleBar")
+        self._init_ui()
+
+    def _init_ui(self):
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(16, 0, 8, 0)
+        layout.setSpacing(10)
+
+        # App Icon & Title
+        icon_lbl = QLabel("✨")
+        icon_lbl.setStyleSheet("font-size: 16px;")
+        layout.addWidget(icon_lbl)
+
+        title_lbl = QLabel("DOLA AI Watermark Remover & Video Combiner")
+        title_lbl.setStyleSheet("font-weight: 800; font-size: 13px; color: #ffffff; letter-spacing: 0.5px;")
+        layout.addWidget(title_lbl)
+
+        badge_lbl = QLabel("v2.0 PRO")
+        badge_lbl.setStyleSheet("background-color: #4f46e5; color: #ffffff; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 4px;")
+        layout.addWidget(badge_lbl)
+
+        # Creator branding link
+        credit_lbl = QLabel("Developed by <a href='https://talhashaikh.com' style='color:#a5b4fc; text-decoration:none; font-weight:bold;'>Talha Shaikh</a> &bull; <a href='https://talhashaikh.com' style='color:#6366f1; text-decoration:none;'>talhashaikh.com</a>")
+        credit_lbl.setTextFormat(Qt.TextFormat.RichText)
+        credit_lbl.setOpenExternalLinks(True)
+        credit_lbl.setStyleSheet("color: #9ca3af; font-size: 11px; margin-left: 6px;")
+        layout.addWidget(credit_lbl)
+
+        layout.addStretch()
+
+        # Window Control Buttons
+        self.btn_min = QPushButton("―")
+        self.btn_min.setFixedSize(36, 30)
+        self.btn_min.setObjectName("titleBarBtnMin")
+        self.btn_min.setToolTip("Minimize")
+        self.btn_min.clicked.connect(self.parent_window.showMinimized)
+
+        self.btn_max = QPushButton("🗖")
+        self.btn_max.setFixedSize(36, 30)
+        self.btn_max.setObjectName("titleBarBtnMax")
+        self.btn_max.setToolTip("Maximize / Restore")
+        self.btn_max.clicked.connect(self._toggle_maximize)
+
+        self.btn_close = QPushButton("✕")
+        self.btn_close.setFixedSize(38, 30)
+        self.btn_close.setObjectName("titleBarBtnClose")
+        self.btn_close.setToolTip("Close Application")
+        self.btn_close.clicked.connect(self.parent_window.close)
+
+        layout.addWidget(self.btn_min)
+        layout.addWidget(self.btn_max)
+        layout.addWidget(self.btn_close)
+
+    def _toggle_maximize(self):
+        if self.parent_window.isMaximized():
+            self.parent_window.showNormal()
+            self.btn_max.setText("🗖")
+        else:
+            self.parent_window.showMaximized()
+            self.btn_max.setText("❐")
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.drag_position = event.globalPosition().toPoint() - self.parent_window.frameGeometry().topLeft()
+            event.accept()
+
+    def mouseMoveEvent(self, event):
+        if event.buttons() == Qt.MouseButton.LeftButton and self.drag_position is not None:
+            if self.parent_window.isMaximized():
+                self.parent_window.showNormal()
+                self.btn_max.setText("🗖")
+            self.parent_window.move(event.globalPosition().toPoint() - self.drag_position)
+            event.accept()
+
+    def mouseDoubleClickEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self._toggle_maximize()
+            event.accept()
+
+
 class MainWindow(QMainWindow):
     """
     Main application Window. Handles watermark removal, processed videos gallery,
@@ -610,6 +722,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Dola AI Watermark Remover & Video Combiner — by Talha Shaikh (talhashaikh.com)")
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Window)
         self.resize(1150, 720)
         self.setAcceptDrops(True)
         
@@ -634,9 +747,19 @@ class MainWindow(QMainWindow):
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         
-        main_layout = QHBoxLayout(central_widget)
+        root_layout = QVBoxLayout(central_widget)
+        root_layout.setContentsMargins(0, 0, 0, 0)
+        root_layout.setSpacing(0)
+        
+        # Attractive Custom Header / Title Bar
+        self.title_bar = CustomTitleBar(self)
+        root_layout.addWidget(self.title_bar)
+        
+        body_widget = QWidget()
+        main_layout = QHBoxLayout(body_widget)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
+        root_layout.addWidget(body_widget)
         
         # 1. Sidebar Panel (Width 360px)
         sidebar = QWidget()
@@ -1570,3 +1693,17 @@ class MainWindow(QMainWindow):
         auth_dlg.tabs.setCurrentIndex(2)  # Switch to Settings / Account tab
         auth_dlg.exec()
         self.license_status_lbl.setText(self._get_license_summary_text())
+
+    def closeEvent(self, event):
+        """Show warning confirmation before exiting the application."""
+        reply = QMessageBox.question(
+            self,
+            "Exit DOLA AI Watermark Remover",
+            "Are you sure you want to exit DOLA AI Watermark Remover?\n\nAny unsaved processing will be terminated.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No
+        )
+        if reply == QMessageBox.StandardButton.Yes:
+            event.accept()
+        else:
+            event.ignore()
