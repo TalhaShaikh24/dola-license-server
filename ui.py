@@ -2,7 +2,7 @@ import os
 import cv2
 import numpy as np
 import datetime
-from PyQt6.QtCore import Qt, QPoint, QRect, pyqtSignal, QSize, QPropertyAnimation, QEasingCurve
+from PyQt6.QtCore import Qt, QPoint, QRect, pyqtSignal, QSize
 from PyQt6.QtGui import (
     QImage, QPixmap, QPainter, QPen, QColor, QBrush, QIcon, QDragEnterEvent,
     QDropEvent, QFont, QCursor
@@ -23,128 +23,144 @@ from licensing.auth_dialog import AuthDialog
 from licensing.svg_icons import get_svg_icon, get_svg_pixmap
 
 # =========================================================================
-#  ULTRA-PREMIUM THEME STYLESHEETS (DARK & LIGHT)
+#  FLAWLESS ULTRA-PREMIUM THEMES (ZERO WHITE GLITCHES, PIXEL PERFECT)
 # =========================================================================
 
 DARK_THEME = """
 QMainWindow {
     background-color: #0b0f19;
-    color: #f8fafc;
 }
 QWidget {
-    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+    background-color: transparent;
     color: #f1f5f9;
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+    font-size: 13px;
 }
 QWidget#customTitleBar {
     background-color: #0d1322;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
-QWidget#primaryNav {
-    background-color: #0d1322;
-    border-right: 1px solid rgba(255, 255, 255, 0.08);
-}
-QWidget#configPanel {
+QWidget#mainSidebar {
     background-color: #111827;
     border-right: 1px solid rgba(255, 255, 255, 0.08);
 }
-QFrame#hudCard {
-    background-color: #111827;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 12px;
+QScrollArea {
+    background-color: transparent;
+    border: none;
+}
+QScrollArea > QWidget > QWidget {
+    background-color: transparent;
 }
 QFrame#canvasContainer {
     background-color: #060911;
     border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 12px;
+    border-radius: 10px;
+}
+QFrame#hudCard {
+    background-color: #111827;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+}
+QFrame#dropCard {
+    background-color: rgba(255, 255, 255, 0.02);
+    border: 1px dashed rgba(99, 102, 241, 0.35);
+    border-radius: 8px;
+}
+QFrame#dropCard:hover {
+    border-color: #6366f1;
+    background-color: rgba(99, 102, 241, 0.05);
 }
 
-QPushButton.nav-btn {
-    background-color: transparent;
-    border: none;
-    border-radius: 8px;
-    padding: 10px 14px;
-    text-align: left;
-    font-size: 13px;
+/* Mode Tab Buttons */
+QPushButton.mode-tab-btn {
+    background-color: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    padding: 8px 10px;
     font-weight: 600;
+    font-size: 12px;
     color: #94a3b8;
 }
-QPushButton.nav-btn:hover {
-    background-color: rgba(255, 255, 255, 0.05);
+QPushButton.mode-tab-btn:hover {
+    background-color: rgba(255, 255, 255, 0.08);
     color: #ffffff;
 }
-QPushButton.nav-btn:checked, QPushButton.nav-btn.active {
-    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 rgba(99, 102, 241, 0.25), stop:1 rgba(99, 102, 241, 0.08));
-    border-left: 3px solid #6366f1;
+QPushButton.mode-tab-btn:checked {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #4f46e5, stop:1 #6366f1);
+    border: 1px solid #818cf8;
     color: #ffffff;
     font-weight: 700;
 }
 
-QPushButton.action-primary {
+/* Action Buttons */
+QPushButton.btn-primary {
     background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #6366f1, stop:1 #4f46e5);
     color: #ffffff;
     border: none;
     border-radius: 8px;
-    padding: 11px 18px;
-    font-size: 13px;
+    padding: 10px 16px;
     font-weight: 700;
+    font-size: 13px;
 }
-QPushButton.action-primary:hover {
+QPushButton.btn-primary:hover {
     background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #4f46e5, stop:1 #4338ca);
 }
-QPushButton.action-primary:disabled {
+QPushButton.btn-primary:disabled {
     background: #1e293b;
-    color: #64748b;
+    color: #475569;
 }
 
-QPushButton.action-combine {
+QPushButton.btn-combine {
     background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #8b5cf6, stop:1 #ec4899);
     color: #ffffff;
     border: none;
     border-radius: 8px;
-    padding: 11px 18px;
-    font-size: 13px;
+    padding: 10px 16px;
     font-weight: 700;
+    font-size: 13px;
 }
-QPushButton.action-combine:hover {
+QPushButton.btn-combine:hover {
     background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #7c3aed, stop:1 #db2777);
 }
-QPushButton.action-combine:disabled {
+QPushButton.btn-combine:disabled {
     background: #1e293b;
-    color: #64748b;
-}
-
-QPushButton.action-danger {
-    background: #e11d48;
-    color: #ffffff;
-    border: none;
-    border-radius: 8px;
-    padding: 10px 18px;
-    font-weight: 700;
-}
-QPushButton.action-danger:hover {
-    background: #be123c;
+    color: #475569;
 }
 
 QPushButton.btn-subtle {
-    background-color: rgba(255, 255, 255, 0.04);
+    background-color: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-    padding: 7px 12px;
+    border-radius: 6px;
+    padding: 6px 12px;
     color: #cbd5e1;
     font-weight: 600;
 }
 QPushButton.btn-subtle:hover {
-    background-color: rgba(255, 255, 255, 0.08);
+    background-color: rgba(255, 255, 255, 0.09);
     color: #ffffff;
     border-color: rgba(255, 255, 255, 0.2);
 }
 
+QPushButton.btn-danger {
+    background-color: #e11d48;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 14px;
+    font-weight: 700;
+}
+QPushButton.btn-danger:hover {
+    background-color: #be123c;
+}
+
+/* Window Buttons */
 QPushButton#titleBarBtnMin, QPushButton#titleBarBtnMax, QPushButton#titleBarBtnClose {
     background: transparent;
     border: none;
     border-radius: 6px;
     color: #94a3b8;
     font-weight: bold;
+    font-size: 13px;
 }
 QPushButton#titleBarBtnMin:hover, QPushButton#titleBarBtnMax:hover {
     background-color: rgba(255, 255, 255, 0.08);
@@ -155,6 +171,7 @@ QPushButton#titleBarBtnClose:hover {
     color: #ffffff;
 }
 
+/* Settings Box */
 QGroupBox {
     font-weight: 700;
     font-size: 11px;
@@ -165,16 +182,17 @@ QGroupBox {
     border-radius: 8px;
     margin-top: 14px;
     padding-top: 16px;
-    background-color: rgba(15, 23, 42, 0.6);
+    background-color: rgba(15, 23, 42, 0.4);
 }
 QGroupBox::title {
     subcontrol-origin: margin;
     subcontrol-position: top left;
     padding: 0 6px;
-    left: 10px;
+    left: 8px;
     background-color: transparent;
 }
 
+/* Sliders */
 QSlider::groove:horizontal {
     height: 6px;
     background: #1e293b;
@@ -196,8 +214,9 @@ QSlider::handle:horizontal:hover {
     background: #e0e7ff;
 }
 
+/* Combos */
 QComboBox {
-    background-color: rgba(15, 23, 42, 0.9);
+    background-color: #0f172a;
     border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 6px;
     padding: 6px 10px;
@@ -207,176 +226,189 @@ QComboBox:hover {
     border-color: #6366f1;
 }
 QComboBox QAbstractItemView {
-    background-color: #111827;
+    background-color: #0f172a;
     border: 1px solid rgba(255, 255, 255, 0.15);
     selection-background-color: #6366f1;
     selection-color: #ffffff;
     color: #f1f5f9;
 }
 
+/* Progress Bar */
 QProgressBar {
     background-color: #1e293b;
     border: none;
     border-radius: 4px;
-    height: 8px;
-    text-align: right;
+    height: 7px;
 }
 QProgressBar::chunk {
     background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #6366f1, stop:1 #a855f7);
     border-radius: 4px;
 }
 
+/* Console Logs */
 QTextEdit {
-    background-color: #090d16;
+    background-color: #060911;
     border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 8px;
-    color: #cbd5e1;
+    border-radius: 6px;
+    color: #94a3b8;
     font-family: 'Consolas', 'Courier New', monospace;
     font-size: 11px;
-    padding: 8px;
+    padding: 6px;
 }
 
+/* Checkbox */
 QCheckBox {
     font-size: 12px;
     color: #f87171;
     font-weight: 600;
 }
 QCheckBox::indicator {
-    width: 16px;
-    height: 16px;
-    border-radius: 4px;
+    width: 15px;
+    height: 15px;
+    border-radius: 3px;
     border: 1px solid #f87171;
     background: transparent;
 }
 QCheckBox::indicator:checked {
     background-color: #e11d48;
 }
-
-QScrollArea {
-    border: none;
-    background: transparent;
-}
 """
 
 LIGHT_THEME = """
 QMainWindow {
-    background-color: #f8fafc;
-    color: #0f172a;
+    background-color: #f1f5f9;
 }
 QWidget {
-    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+    background-color: transparent;
     color: #0f172a;
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+    font-size: 13px;
 }
 QWidget#customTitleBar {
     background-color: #ffffff;
     border-bottom: 1px solid #e2e8f0;
 }
-QWidget#primaryNav {
+QWidget#mainSidebar {
     background-color: #ffffff;
     border-right: 1px solid #e2e8f0;
 }
-QWidget#configPanel {
-    background-color: #f1f5f9;
-    border-right: 1px solid #e2e8f0;
+QScrollArea {
+    background-color: transparent;
+    border: none;
 }
-QFrame#hudCard {
-    background-color: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
+QScrollArea > QWidget > QWidget {
+    background-color: transparent;
 }
 QFrame#canvasContainer {
     background-color: #0f172a;
     border: 1px solid #e2e8f0;
-    border-radius: 12px;
+    border-radius: 10px;
+}
+QFrame#hudCard {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+}
+QFrame#dropCard {
+    background-color: #f8fafc;
+    border: 1px dashed #6366f1;
+    border-radius: 8px;
+}
+QFrame#dropCard:hover {
+    border-color: #4f46e5;
+    background-color: #eef2ff;
 }
 
-QPushButton.nav-btn {
-    background-color: transparent;
-    border: none;
-    border-radius: 8px;
-    padding: 10px 14px;
-    text-align: left;
-    font-size: 13px;
+/* Mode Tab Buttons */
+QPushButton.mode-tab-btn {
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 8px 10px;
     font-weight: 600;
+    font-size: 12px;
     color: #64748b;
 }
-QPushButton.nav-btn:hover {
+QPushButton.mode-tab-btn:hover {
     background-color: #f1f5f9;
     color: #0f172a;
 }
-QPushButton.nav-btn:checked, QPushButton.nav-btn.active {
-    background: #e0e7ff;
-    border-left: 3px solid #6366f1;
-    color: #4338ca;
+QPushButton.mode-tab-btn:checked {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #4f46e5, stop:1 #6366f1);
+    border: 1px solid #4f46e5;
+    color: #ffffff;
     font-weight: 700;
 }
 
-QPushButton.action-primary {
+/* Action Buttons */
+QPushButton.btn-primary {
     background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #6366f1, stop:1 #4f46e5);
     color: #ffffff;
     border: none;
     border-radius: 8px;
-    padding: 11px 18px;
-    font-size: 13px;
+    padding: 10px 16px;
     font-weight: 700;
+    font-size: 13px;
 }
-QPushButton.action-primary:hover {
+QPushButton.btn-primary:hover {
     background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #4f46e5, stop:1 #4338ca);
 }
-QPushButton.action-primary:disabled {
+QPushButton.btn-primary:disabled {
     background: #cbd5e1;
     color: #94a3b8;
 }
 
-QPushButton.action-combine {
+QPushButton.btn-combine {
     background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #8b5cf6, stop:1 #ec4899);
     color: #ffffff;
     border: none;
     border-radius: 8px;
-    padding: 11px 18px;
-    font-size: 13px;
+    padding: 10px 16px;
     font-weight: 700;
+    font-size: 13px;
 }
-QPushButton.action-combine:hover {
+QPushButton.btn-combine:hover {
     background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #7c3aed, stop:1 #db2777);
 }
-QPushButton.action-combine:disabled {
+QPushButton.btn-combine:disabled {
     background: #cbd5e1;
     color: #94a3b8;
 }
 
-QPushButton.action-danger {
-    background: #e11d48;
-    color: #ffffff;
-    border: none;
-    border-radius: 8px;
-    padding: 10px 18px;
-    font-weight: 700;
-}
-QPushButton.action-danger:hover {
-    background: #be123c;
-}
-
 QPushButton.btn-subtle {
-    background-color: #ffffff;
+    background-color: #f8fafc;
     border: 1px solid #cbd5e1;
-    border-radius: 8px;
-    padding: 7px 12px;
+    border-radius: 6px;
+    padding: 6px 12px;
     color: #334155;
     font-weight: 600;
 }
 QPushButton.btn-subtle:hover {
-    background-color: #f8fafc;
-    border-color: #94a3b8;
+    background-color: #f1f5f9;
     color: #0f172a;
+    border-color: #94a3b8;
 }
 
+QPushButton.btn-danger {
+    background-color: #e11d48;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 14px;
+    font-weight: 700;
+}
+QPushButton.btn-danger:hover {
+    background-color: #be123c;
+}
+
+/* Window Buttons */
 QPushButton#titleBarBtnMin, QPushButton#titleBarBtnMax, QPushButton#titleBarBtnClose {
     background: transparent;
     border: none;
     border-radius: 6px;
     color: #64748b;
     font-weight: bold;
+    font-size: 13px;
 }
 QPushButton#titleBarBtnMin:hover, QPushButton#titleBarBtnMax:hover {
     background-color: #f1f5f9;
@@ -387,6 +419,7 @@ QPushButton#titleBarBtnClose:hover {
     color: #ffffff;
 }
 
+/* Settings Box */
 QGroupBox {
     font-weight: 700;
     font-size: 11px;
@@ -403,10 +436,11 @@ QGroupBox::title {
     subcontrol-origin: margin;
     subcontrol-position: top left;
     padding: 0 6px;
-    left: 10px;
+    left: 8px;
     background-color: transparent;
 }
 
+/* Sliders */
 QSlider::groove:horizontal {
     height: 6px;
     background: #e2e8f0;
@@ -425,6 +459,7 @@ QSlider::handle:horizontal {
     border-radius: 7px;
 }
 
+/* Combos */
 QComboBox {
     background-color: #ffffff;
     border: 1px solid #cbd5e1;
@@ -443,47 +478,44 @@ QComboBox QAbstractItemView {
     color: #0f172a;
 }
 
+/* Progress Bar */
 QProgressBar {
     background-color: #e2e8f0;
     border: none;
     border-radius: 4px;
-    height: 8px;
-    text-align: right;
+    height: 7px;
 }
 QProgressBar::chunk {
     background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #6366f1, stop:1 #a855f7);
     border-radius: 4px;
 }
 
+/* Console Logs */
 QTextEdit {
     background-color: #f8fafc;
     border: 1px solid #e2e8f0;
-    border-radius: 8px;
+    border-radius: 6px;
     color: #334155;
     font-family: 'Consolas', 'Courier New', monospace;
     font-size: 11px;
-    padding: 8px;
+    padding: 6px;
 }
 
+/* Checkbox */
 QCheckBox {
     font-size: 12px;
     color: #dc2626;
     font-weight: 600;
 }
 QCheckBox::indicator {
-    width: 16px;
-    height: 16px;
-    border-radius: 4px;
+    width: 15px;
+    height: 15px;
+    border-radius: 3px;
     border: 1px solid #dc2626;
     background: transparent;
 }
 QCheckBox::indicator:checked {
     background-color: #dc2626;
-}
-
-QScrollArea {
-    border: none;
-    background: transparent;
 }
 """
 
@@ -704,25 +736,23 @@ class ROISelectionCanvas(QWidget):
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         
         if self.pixmap is None or self.pixmap.isNull():
-            # Modern Empty Drop-zone placeholder
             painter.fillRect(self.rect(), QColor("#060911"))
             
             painter.setPen(QPen(QColor("rgba(99, 102, 241, 0.4)"), 1.5, Qt.PenStyle.DashLine))
             inner_rect = self.rect().adjusted(24, 24, -24, -24)
-            painter.drawRoundedRect(inner_rect, 12, 12)
+            painter.drawRoundedRect(inner_rect, 10, 10)
             
-            # Central Text & Info
             painter.setPen(QColor("#f8fafc"))
-            painter.setFont(QFont("Segoe UI", 16, QFont.Weight.Bold))
-            painter.drawText(self.rect().adjusted(0, -30, 0, 0), Qt.AlignmentFlag.AlignCenter, "Video Frame Preview")
+            painter.setFont(QFont("Segoe UI", 15, QFont.Weight.Bold))
+            painter.drawText(self.rect().adjusted(0, -25, 0, 0), Qt.AlignmentFlag.AlignCenter, "Video Frame Preview")
             
             painter.setPen(QColor("#94a3b8"))
-            painter.setFont(QFont("Segoe UI", 12))
-            painter.drawText(self.rect().adjusted(0, 30, 0, 0), Qt.AlignmentFlag.AlignCenter, "Drag & Drop video file here, or select a video to inspect frame")
+            painter.setFont(QFont("Segoe UI", 11))
+            painter.drawText(self.rect().adjusted(0, 25, 0, 0), Qt.AlignmentFlag.AlignCenter, "Drag & Drop video file here, or click Browse to load")
             
             painter.setFont(QFont("Segoe UI", 10))
             painter.setPen(QColor("#64748b"))
-            painter.drawText(self.rect().adjusted(0, 70, 0, 0), Qt.AlignmentFlag.AlignCenter, "Click & drag on the video to position or resize the watermark removal box")
+            painter.drawText(self.rect().adjusted(0, 60, 0, 0), Qt.AlignmentFlag.AlignCenter, "Click and drag to adjust the watermark removal box")
             return
             
         scale, x_off, y_off, w_sc, h_sc = self.get_scaling_metrics()
@@ -734,22 +764,18 @@ class ROISelectionCanvas(QWidget):
         rw = int(self.roi_rect["width"] * scale)
         rh = int(self.roi_rect["height"] * scale)
         
-        # Semi-transparent fill
         painter.fillRect(QRect(rx, ry, rw, rh), QColor(99, 102, 241, 60))
         
-        # Glowing border
         pen = QPen(QColor("#6366f1"), 2)
         painter.setPen(pen)
         painter.drawRect(rx, ry, rw, rh)
         
-        # Dimension Badge
         dim_str = f"{self.roi_rect['width']} × {self.roi_rect['height']} px"
         painter.setFont(QFont("Segoe UI", 9, QFont.Weight.Bold))
-        painter.fillRect(QRect(rx, max(0, ry - 22), 110, 20), QColor("#1e1b4b"))
+        painter.fillRect(QRect(rx, max(0, ry - 20), 105, 18), QColor("#1e1b4b"))
         painter.setPen(QColor("#e0e7ff"))
-        painter.drawText(QRect(rx + 6, max(0, ry - 20), 100, 16), Qt.AlignmentFlag.AlignLeft, dim_str)
+        painter.drawText(QRect(rx + 6, max(0, ry - 18), 95, 14), Qt.AlignmentFlag.AlignLeft, dim_str)
         
-        # Resize Corner Handles
         handles = self.get_handles_widget_rects(rx, ry, rw, rh)
         painter.setBrush(QBrush(QColor("#ffffff")))
         painter.setPen(QPen(QColor("#4f46e5"), 1.5))
@@ -758,7 +784,7 @@ class ROISelectionCanvas(QWidget):
 
 
 class CustomTitleBar(QWidget):
-    """Ultra-clean custom header with window controls, creator branding, and light/dark theme switch."""
+    """Ultra-clean header with window controls, creator branding, and light/dark theme switch."""
     def __init__(self, parent: QMainWindow):
         super().__init__(parent)
         self.parent_window = parent
@@ -769,7 +795,7 @@ class CustomTitleBar(QWidget):
 
     def _init_ui(self):
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(16, 0, 8, 0)
+        layout.setContentsMargins(14, 0, 8, 0)
         layout.setSpacing(10)
 
         # App Icon & Title
@@ -779,14 +805,14 @@ class CustomTitleBar(QWidget):
         
         icon_lbl = QLabel()
         if os.path.exists(target_img):
-            pix = QPixmap(target_img).scaled(44, 44, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+            pix = QPixmap(target_img).scaled(40, 40, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
             pix.setDevicePixelRatio(2.0)
             icon_lbl.setPixmap(pix)
         else:
-            icon_lbl.setPixmap(get_svg_pixmap("sparkles", "#818cf8", 20))
+            icon_lbl.setPixmap(get_svg_pixmap("sparkles", "#818cf8", 18))
         layout.addWidget(icon_lbl)
 
-        title_lbl = QLabel("DOLA AI Video Studio")
+        title_lbl = QLabel("DOLA AI Watermark Remover & Video Combiner")
         title_lbl.setStyleSheet("font-weight: 800; font-size: 13px; letter-spacing: 0.3px;")
         layout.addWidget(title_lbl)
 
@@ -830,7 +856,7 @@ class CustomTitleBar(QWidget):
         self.btn_max.clicked.connect(self._toggle_maximize)
 
         self.btn_close = QPushButton()
-        self.btn_close.setIcon(get_svg_icon("close", "#94a3b8", 14))
+        self.btn_close.setIcon(get_svg_icon("close", "#94a3b8", 13))
         self.btn_close.setFixedSize(38, 30)
         self.btn_close.setObjectName("titleBarBtnClose")
         self.btn_close.setToolTip("Close Application")
@@ -869,8 +895,8 @@ class CustomTitleBar(QWidget):
 
 class MainWindow(QMainWindow):
     """
-    Main Video Studio Application. Supports collapsible navigation, dark/light themes,
-    batch watermark removal, and video combiner with circular drag-and-drop order badges.
+    Main Video Studio Application. Sleek single unified sidebar, pixel-perfect dark & light
+    themes, live video preview with ROI, and high-performance video combiner.
     """
     def __init__(self):
         super().__init__()
@@ -880,7 +906,6 @@ class MainWindow(QMainWindow):
         self.setAcceptDrops(True)
         
         self.current_theme = "dark"
-        self.sidebar_expanded = True
         
         # State variables
         self.selected_single_video = ""
@@ -907,10 +932,11 @@ class MainWindow(QMainWindow):
         root_layout.setContentsMargins(0, 0, 0, 0)
         root_layout.setSpacing(0)
         
-        # Custom Title Bar
+        # 1. Custom Title Bar
         self.title_bar = CustomTitleBar(self)
         root_layout.addWidget(self.title_bar)
         
+        # 2. Main Body (Sidebar + Viewport)
         body_widget = QWidget()
         main_layout = QHBoxLayout(body_widget)
         main_layout.setContentsMargins(0, 0, 0, 0)
@@ -918,88 +944,50 @@ class MainWindow(QMainWindow):
         root_layout.addWidget(body_widget)
         
         # =====================================================================
-        # 1. COLLAPSIBLE PRIMARY NAVIGATION SIDEBAR
+        # SINGLE UNIFIED SIDEBAR (Width: 380px)
         # =====================================================================
-        self.primary_nav = QWidget()
-        self.primary_nav.setObjectName("primaryNav")
-        self.primary_nav.setFixedWidth(210)
-        nav_layout = QVBoxLayout(self.primary_nav)
-        nav_layout.setContentsMargins(10, 14, 10, 14)
-        nav_layout.setSpacing(8)
+        self.sidebar = QWidget()
+        self.sidebar.setObjectName("mainSidebar")
+        self.sidebar.setFixedWidth(380)
+        sidebar_layout = QVBoxLayout(self.sidebar)
+        sidebar_layout.setContentsMargins(14, 14, 14, 14)
+        sidebar_layout.setSpacing(12)
 
-        # Collapse / Expand Toggle Button
-        h_toggle = QHBoxLayout()
-        self.lbl_nav_title = QLabel("STUDIO MODES")
-        self.lbl_nav_title.setStyleSheet("font-size: 10px; font-weight: 800; color: #64748b; letter-spacing: 0.8px;")
-        
-        self.btn_toggle_sidebar = QPushButton("◀")
-        self.btn_toggle_sidebar.setFixedSize(26, 24)
-        self.btn_toggle_sidebar.setProperty("class", "btn-subtle")
-        self.btn_toggle_sidebar.setStyleSheet("padding:0; font-size:10px;")
-        self.btn_toggle_sidebar.setToolTip("Toggle Sidebar Width")
-        self.btn_toggle_sidebar.clicked.connect(self.toggle_sidebar_width)
-        
-        h_toggle.addWidget(self.lbl_nav_title)
-        h_toggle.addStretch()
-        h_toggle.addWidget(self.btn_toggle_sidebar)
-        nav_layout.addLayout(h_toggle)
-        nav_layout.addSpacing(6)
+        # Mode Selector Buttons (Single / Batch / Combine)
+        h_modes = QHBoxLayout()
+        h_modes.setSpacing(6)
 
-        # Nav Mode Buttons
-        self.btn_nav_single = QPushButton("  Single Video")
-        self.btn_nav_single.setIcon(get_svg_icon("sparkles", "#818cf8", 18))
-        self.btn_nav_single.setProperty("class", "nav-btn active")
-        self.btn_nav_single.setCheckable(True)
-        self.btn_nav_single.setChecked(True)
-        self.btn_nav_single.clicked.connect(lambda: self.switch_mode(0))
-        nav_layout.addWidget(self.btn_nav_single)
+        self.btn_mode_single = QPushButton("Single Video")
+        self.btn_mode_single.setIcon(get_svg_icon("sparkles", "#818cf8", 14))
+        self.btn_mode_single.setProperty("class", "mode-tab-btn")
+        self.btn_mode_single.setCheckable(True)
+        self.btn_mode_single.setChecked(True)
+        self.btn_mode_single.clicked.connect(lambda: self.switch_mode(0))
+        h_modes.addWidget(self.btn_mode_single)
 
-        self.btn_nav_batch = QPushButton("  Folder Batch")
-        self.btn_nav_batch.setIcon(get_svg_icon("film", "#60a5fa", 18))
-        self.btn_nav_batch.setProperty("class", "nav-btn")
-        self.btn_nav_batch.setCheckable(True)
-        self.btn_nav_batch.clicked.connect(lambda: self.switch_mode(1))
-        nav_layout.addWidget(self.btn_nav_batch)
+        self.btn_mode_batch = QPushButton("Folder Batch")
+        self.btn_mode_batch.setIcon(get_svg_icon("film", "#60a5fa", 14))
+        self.btn_mode_batch.setProperty("class", "mode-tab-btn")
+        self.btn_mode_batch.setCheckable(True)
+        self.btn_mode_batch.clicked.connect(lambda: self.switch_mode(1))
+        h_modes.addWidget(self.btn_mode_batch)
 
-        self.btn_nav_combine = QPushButton("  Video Combiner")
-        self.btn_nav_combine.setIcon(get_svg_icon("film", "#f43f5e", 18))
-        self.btn_nav_combine.setProperty("class", "nav-btn")
-        self.btn_nav_combine.setCheckable(True)
-        self.btn_nav_combine.clicked.connect(lambda: self.switch_mode(2))
-        nav_layout.addWidget(self.btn_nav_combine)
+        self.btn_mode_combine = QPushButton("Combiner")
+        self.btn_mode_combine.setIcon(get_svg_icon("film", "#f43f5e", 14))
+        self.btn_mode_combine.setProperty("class", "mode-tab-btn")
+        self.btn_mode_combine.setCheckable(True)
+        self.btn_mode_combine.clicked.connect(lambda: self.switch_mode(2))
+        h_modes.addWidget(self.btn_mode_combine)
 
-        nav_layout.addStretch()
+        sidebar_layout.addLayout(h_modes)
 
-        # Bottom Creator Info Card
-        self.creator_card = QFrame()
-        self.creator_card.setStyleSheet("background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 8px;")
-        c_layout = QVBoxLayout(self.creator_card)
-        c_layout.setContentsMargins(0, 0, 0, 0)
-        c_layout.setSpacing(2)
-        c_lbl = QLabel("<b style='color:#f8fafc;'>Talha Shaikh</b><br><a href='https://talhashaikh.com' style='color:#818cf8; text-decoration:none; font-size:11px;'>talhashaikh.com</a>")
-        c_lbl.setTextFormat(Qt.TextFormat.RichText)
-        c_lbl.setOpenExternalLinks(True)
-        c_layout.addWidget(c_lbl)
-        nav_layout.addWidget(self.creator_card)
-
-        main_layout.addWidget(self.primary_nav)
-
-        # =====================================================================
-        # 2. SECONDARY CONFIGURATION / TOOLS PANEL (Width 320px)
-        # =====================================================================
-        self.config_panel = QWidget()
-        self.config_panel.setObjectName("configPanel")
-        self.config_panel.setFixedWidth(320)
-        config_layout = QVBoxLayout(self.config_panel)
-        config_layout.setContentsMargins(16, 14, 16, 14)
-        config_layout.setSpacing(12)
-
-        # Scroll Area for configuration settings
+        # Scrollable Configuration Controls
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
         scroll_content = QWidget()
         sc_layout = QVBoxLayout(scroll_content)
-        sc_layout.setContentsMargins(0, 0, 4, 0)
+        sc_layout.setContentsMargins(0, 4, 4, 4)
         sc_layout.setSpacing(12)
 
         # --- Stacked Mode Inputs ---
@@ -1011,20 +999,26 @@ class MainWindow(QMainWindow):
         p0_layout.setContentsMargins(0, 0, 0, 0)
         p0_layout.setSpacing(8)
 
-        lbl_s_title = QLabel("Input Video:")
+        lbl_s_title = QLabel("Select Input Video File:")
         lbl_s_title.setFont(QFont("Segoe UI", 10, QFont.Weight.Bold))
         p0_layout.addWidget(lbl_s_title)
 
-        h_s_file = QHBoxLayout()
+        drop_card_s = QFrame()
+        drop_card_s.setObjectName("dropCard")
+        dc_layout_s = QHBoxLayout(drop_card_s)
+        dc_layout_s.setContentsMargins(10, 8, 10, 8)
+        
         self.txt_single_file = QLabel("No video selected")
-        self.txt_single_file.setStyleSheet("background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 7px 10px; font-size: 11px;")
+        self.txt_single_file.setStyleSheet("font-size: 11px; color: #94a3b8;")
         self.txt_single_file.setWordWrap(False)
+        
         btn_browse_single = QPushButton("Browse")
         btn_browse_single.setProperty("class", "btn-subtle")
         btn_browse_single.clicked.connect(self.browse_single_file)
-        h_s_file.addWidget(self.txt_single_file, 7)
-        h_s_file.addWidget(btn_browse_single, 3)
-        p0_layout.addLayout(h_s_file)
+        
+        dc_layout_s.addWidget(self.txt_single_file, 7)
+        dc_layout_s.addWidget(btn_browse_single, 3)
+        p0_layout.addWidget(drop_card_s)
         self.stacked_inputs.addWidget(page_single)
 
         # Page 1: Batch Folder Inputs
@@ -1033,33 +1027,41 @@ class MainWindow(QMainWindow):
         p1_layout.setContentsMargins(0, 0, 0, 0)
         p1_layout.setSpacing(8)
 
-        lbl_b_in = QLabel("Batch Input Folder:")
+        lbl_b_in = QLabel("Select Input Folder:")
         lbl_b_in.setFont(QFont("Segoe UI", 10, QFont.Weight.Bold))
         p1_layout.addWidget(lbl_b_in)
 
-        h_b_in = QHBoxLayout()
+        drop_card_b = QFrame()
+        drop_card_b.setObjectName("dropCard")
+        dc_layout_b = QHBoxLayout(drop_card_b)
+        dc_layout_b.setContentsMargins(10, 8, 10, 8)
+        
         self.txt_batch_in = QLabel("No folder selected")
-        self.txt_batch_in.setStyleSheet("background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 7px 10px; font-size: 11px;")
+        self.txt_batch_in.setStyleSheet("font-size: 11px; color: #94a3b8;")
         btn_b_in = QPushButton("Browse")
         btn_b_in.setProperty("class", "btn-subtle")
         btn_b_in.clicked.connect(self.browse_batch_in_folder)
-        h_b_in.addWidget(self.txt_batch_in, 7)
-        h_b_in.addWidget(btn_b_in, 3)
-        p1_layout.addLayout(h_b_in)
+        dc_layout_b.addWidget(self.txt_batch_in, 7)
+        dc_layout_b.addWidget(btn_b_in, 3)
+        p1_layout.addWidget(drop_card_b)
 
-        lbl_b_out = QLabel("Output Folder:")
+        lbl_b_out = QLabel("Output Destination Folder:")
         lbl_b_out.setFont(QFont("Segoe UI", 10, QFont.Weight.Bold))
         p1_layout.addWidget(lbl_b_out)
 
-        h_b_out = QHBoxLayout()
+        drop_card_bo = QFrame()
+        drop_card_bo.setObjectName("dropCard")
+        dc_layout_bo = QHBoxLayout(drop_card_bo)
+        dc_layout_bo.setContentsMargins(10, 8, 10, 8)
+
         self.txt_batch_out = QLabel("no_watermarks/")
-        self.txt_batch_out.setStyleSheet("background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 7px 10px; font-size: 11px;")
+        self.txt_batch_out.setStyleSheet("font-size: 11px; color: #94a3b8;")
         self.btn_browse_batch_out = QPushButton("Browse")
         self.btn_browse_batch_out.setProperty("class", "btn-subtle")
         self.btn_browse_batch_out.clicked.connect(self.browse_batch_out_folder)
-        h_b_out.addWidget(self.txt_batch_out, 7)
-        h_b_out.addWidget(self.btn_browse_batch_out, 3)
-        p1_layout.addLayout(h_b_out)
+        dc_layout_bo.addWidget(self.txt_batch_out, 7)
+        dc_layout_bo.addWidget(self.btn_browse_batch_out, 3)
+        p1_layout.addWidget(drop_card_bo)
 
         self.lbl_batch_stats = QLabel("0 videos found.")
         self.lbl_batch_stats.setStyleSheet("color: #818cf8; font-size: 11px; font-weight: 600;")
@@ -1086,21 +1088,25 @@ class MainWindow(QMainWindow):
         lbl_c_out.setFont(QFont("Segoe UI", 10, QFont.Weight.Bold))
         p2_layout.addWidget(lbl_c_out)
 
-        h_c_out = QHBoxLayout()
+        drop_card_c = QFrame()
+        drop_card_c.setObjectName("dropCard")
+        dc_layout_c = QHBoxLayout(drop_card_c)
+        dc_layout_c.setContentsMargins(10, 8, 10, 8)
+
         self.txt_combine_out = QLabel("Default Destination")
-        self.txt_combine_out.setStyleSheet("background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 7px 10px; font-size: 11px;")
+        self.txt_combine_out.setStyleSheet("font-size: 11px; color: #94a3b8;")
         btn_c_out = QPushButton("Browse")
         btn_c_out.setProperty("class", "btn-subtle")
         btn_c_out.clicked.connect(self.browse_combine_out_folder)
-        h_c_out.addWidget(self.txt_combine_out, 7)
-        h_c_out.addWidget(btn_c_out, 3)
-        p2_layout.addLayout(h_c_out)
+        dc_layout_c.addWidget(self.txt_combine_out, 7)
+        dc_layout_c.addWidget(btn_c_out, 3)
+        p2_layout.addWidget(drop_card_c)
         self.stacked_inputs.addWidget(page_comb)
 
         sc_layout.addWidget(self.stacked_inputs)
 
         # --- Watermark Settings Group (Visible in Single & Batch modes) ---
-        self.grp_settings = QGroupBox("Removal Algorithm Tuning")
+        self.grp_settings = QGroupBox("Removal Algorithm Configuration")
         settings_grid = QGridLayout(self.grp_settings)
         settings_grid.setSpacing(10)
         settings_grid.setContentsMargins(10, 16, 10, 12)
@@ -1163,7 +1169,7 @@ class MainWindow(QMainWindow):
         self.combo_threads.setCurrentText(str(max(1, cores // 2)))
         settings_grid.addWidget(self.combo_threads, 5, 1)
 
-        self.chk_overwrite = QCheckBox("Overwrite In-Place")
+        self.chk_overwrite = QCheckBox("Overwrite Original File(s)")
         self.chk_overwrite.toggled.connect(self.on_overwrite_toggled)
         settings_grid.addWidget(self.chk_overwrite, 6, 0, 1, 2)
         sc_layout.addWidget(self.grp_settings)
@@ -1205,7 +1211,7 @@ class MainWindow(QMainWindow):
 
         sc_layout.addStretch()
         scroll.setWidget(scroll_content)
-        config_layout.addWidget(scroll)
+        sidebar_layout.addWidget(scroll)
 
         # Action Buttons
         self.btn_preview = QPushButton("Preview Removal Result")
@@ -1213,39 +1219,39 @@ class MainWindow(QMainWindow):
         self.btn_preview.setProperty("class", "btn-subtle")
         self.btn_preview.clicked.connect(self.show_removal_preview)
         self.btn_preview.setEnabled(False)
-        config_layout.addWidget(self.btn_preview)
+        sidebar_layout.addWidget(self.btn_preview)
 
         self.btn_start = QPushButton("Start Watermark Removal")
         self.btn_start.setIcon(get_svg_icon("sparkles", "#ffffff", 16))
-        self.btn_start.setProperty("class", "action-primary")
+        self.btn_start.setProperty("class", "btn-primary")
         self.btn_start.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         self.btn_start.clicked.connect(self.start_processing)
         self.btn_start.setEnabled(False)
-        config_layout.addWidget(self.btn_start)
+        sidebar_layout.addWidget(self.btn_start)
 
         self.btn_combine = QPushButton("Merge Selected Videos")
         self.btn_combine.setIcon(get_svg_icon("film", "#ffffff", 16))
-        self.btn_combine.setProperty("class", "action-combine")
+        self.btn_combine.setProperty("class", "btn-combine")
         self.btn_combine.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         self.btn_combine.clicked.connect(self.start_combining)
         self.btn_combine.setVisible(False)
-        config_layout.addWidget(self.btn_combine)
+        sidebar_layout.addWidget(self.btn_combine)
 
         self.btn_cancel = QPushButton("Cancel Active Task")
         self.btn_cancel.setIcon(get_svg_icon("close", "#ffffff", 14))
-        self.btn_cancel.setProperty("class", "action-danger")
+        self.btn_cancel.setProperty("class", "btn-danger")
         self.btn_cancel.clicked.connect(self.cancel_processing)
         self.btn_cancel.setVisible(False)
-        config_layout.addWidget(self.btn_cancel)
+        sidebar_layout.addWidget(self.btn_cancel)
 
-        main_layout.addWidget(self.config_panel)
+        main_layout.addWidget(self.sidebar)
 
         # =====================================================================
-        # 3. RIGHT PANEL: VIEWPORT & HIGH-END PROGRESS HUD CARD
+        # RIGHT PANEL: VIEWPORT & PROGRESS HUD CARD
         # =====================================================================
         right_panel = QWidget()
         right_layout = QVBoxLayout(right_panel)
-        right_layout.setContentsMargins(14, 14, 16, 14)
+        right_layout.setContentsMargins(14, 14, 14, 14)
         right_layout.setSpacing(12)
 
         splitter = QSplitter(Qt.Orientation.Vertical)
@@ -1338,20 +1344,9 @@ class MainWindow(QMainWindow):
 
     # --- Mode Switching (Single vs Batch vs Combine) ---
     def switch_mode(self, mode_idx: int):
-        self.btn_nav_single.setChecked(mode_idx == 0)
-        self.btn_nav_single.setProperty("class", "nav-btn active" if mode_idx == 0 else "nav-btn")
-        self.btn_nav_single.style().unpolish(self.btn_nav_single)
-        self.btn_nav_single.style().polish(self.btn_nav_single)
-
-        self.btn_nav_batch.setChecked(mode_idx == 1)
-        self.btn_nav_batch.setProperty("class", "nav-btn active" if mode_idx == 1 else "nav-btn")
-        self.btn_nav_batch.style().unpolish(self.btn_nav_batch)
-        self.btn_nav_batch.style().polish(self.btn_nav_batch)
-
-        self.btn_nav_combine.setChecked(mode_idx == 2)
-        self.btn_nav_combine.setProperty("class", "nav-btn active" if mode_idx == 2 else "nav-btn")
-        self.btn_nav_combine.style().unpolish(self.btn_nav_combine)
-        self.btn_nav_combine.style().polish(self.btn_nav_combine)
+        self.btn_mode_single.setChecked(mode_idx == 0)
+        self.btn_mode_batch.setChecked(mode_idx == 1)
+        self.btn_mode_combine.setChecked(mode_idx == 2)
 
         self.stacked_inputs.setCurrentIndex(mode_idx)
         self.stacked_view.setCurrentIndex(1 if mode_idx == 2 else 0)
@@ -1364,26 +1359,6 @@ class MainWindow(QMainWindow):
         self.btn_preview.setVisible(mode_idx != 2)
 
         self.update_action_states()
-
-    def toggle_sidebar_width(self):
-        if self.sidebar_expanded:
-            self.primary_nav.setFixedWidth(64)
-            self.lbl_nav_title.hide()
-            self.creator_card.hide()
-            self.btn_toggle_sidebar.setText("▶")
-            self.btn_nav_single.setText("")
-            self.btn_nav_batch.setText("")
-            self.btn_nav_combine.setText("")
-            self.sidebar_expanded = False
-        else:
-            self.primary_nav.setFixedWidth(210)
-            self.lbl_nav_title.show()
-            self.creator_card.show()
-            self.btn_toggle_sidebar.setText("◀")
-            self.btn_nav_single.setText("  Single Video")
-            self.btn_nav_batch.setText("  Folder Batch")
-            self.btn_nav_combine.setText("  Video Combiner")
-            self.sidebar_expanded = True
 
     # --- Theme Switching (Dark / Light) ---
     def toggle_theme(self):
@@ -1436,14 +1411,12 @@ class MainWindow(QMainWindow):
             self.btn_start.setVisible(False)
             self.btn_combine.setVisible(False)
             self.btn_cancel.setVisible(True)
-            self.primary_nav.setEnabled(False)
-            self.config_panel.setEnabled(False)
+            self.sidebar.setEnabled(False)
             self.gallery_widget.setEnabled(False)
             return
             
         self.btn_cancel.setVisible(False)
-        self.primary_nav.setEnabled(True)
-        self.config_panel.setEnabled(True)
+        self.sidebar.setEnabled(True)
         self.gallery_widget.setEnabled(True)
         
         curr_idx = self.stacked_inputs.currentIndex()
@@ -1762,7 +1735,7 @@ class MainWindow(QMainWindow):
 
             QMessageBox.information(
                 self, "Watermark Removal Complete",
-                f"{message}\n\nYour processed videos are ready in the 'Video Combiner' gallery."
+                f"{message}\n\nYour processed videos are ready in the 'Combiner' gallery."
             )
         else:
             QMessageBox.warning(self, "Process Incomplete", message)
@@ -1933,7 +1906,6 @@ class PreviewDialog(QDialog):
         grid = QGridLayout()
         grid.setSpacing(14)
         
-        # Original Cropped Frame
         h, w = frame_bgr.shape[:2]
         rx, ry, rw, rh = roi_dict["x"], roi_dict["y"], roi_dict["width"], roi_dict["height"]
         pad = 20
@@ -1982,7 +1954,7 @@ class PreviewDialog(QDialog):
         h_btn = QHBoxLayout()
         h_btn.addStretch()
         btn_close = QPushButton("Close Preview")
-        btn_close.setProperty("class", "action-primary")
+        btn_close.setProperty("class", "btn-primary")
         btn_close.clicked.connect(self.accept)
         h_btn.addWidget(btn_close)
         layout.addLayout(h_btn)
