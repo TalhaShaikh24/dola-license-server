@@ -9,3 +9,5 @@ dist/
 *.db
 crash_log.txt
 .license_session.json
+
+.vercel
