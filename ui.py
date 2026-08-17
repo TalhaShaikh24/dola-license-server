@@ -318,12 +318,12 @@ class ROISelectionCanvas(QWidget):
             
             # Exact user-specified default positions:
             # 16:9 Landscape: X:1105, Y:648, W:165, H:57
-            # 9:16 Portrait:  X:584,  Y:1200, W:165, H:44
+            # 9:16 Portrait:  X:576,  Y:1200, W:128, H:44
             if h > w:
                 # 9:16 Portrait
-                bw = min(165, w)
+                bw = min(128, w)
                 bh = min(44, h)
-                bx = max(0, min(584, w - bw))
+                bx = max(0, min(576, w - bw))
                 by = max(0, min(1200, h - bh))
             else:
                 # 16:9 Landscape
@@ -361,9 +361,9 @@ class ROISelectionCanvas(QWidget):
     def apply_9_16_preset(self):
         w = self.raw_image_width
         h = self.raw_image_height
-        bw = min(165, w)
+        bw = min(128, w)
         bh = min(44, h)
-        bx = max(0, min(584, w - bw))
+        bx = max(0, min(576, w - bw))
         by = max(0, min(1200, h - bh))
         self.roi_rect = {
             "x": bx, "y": by, "width": bw, "height": bh,
@@ -995,7 +995,7 @@ class MainWindow(QMainWindow):
         btn_preset_9_16 = QPushButton("📱 Reset 9:16")
         btn_preset_9_16.setProperty("class", "btn-subtle")
         btn_preset_9_16.setStyleSheet("font-size: 10px; padding: 4px 6px; font-weight:700;")
-        btn_preset_9_16.setToolTip("Set to 9:16 default (X:584, Y:1200, W:165, H:44)")
+        btn_preset_9_16.setToolTip("Set to 9:16 default (X:576, Y:1200, W:128, H:44)")
         btn_preset_9_16.clicked.connect(lambda: self.canvas.apply_9_16_preset())
 
         h_presets.addWidget(btn_preset_16_9)
