@@ -213,7 +213,7 @@ class AuthDialog(QDialog):
         self.tabs = QTabWidget()
         self.tabs.addTab(self._create_login_tab(), "Sign In")
         self.tabs.addTab(self._create_register_tab(), "Register Account")
-        self.tabs.addTab(self._create_settings_tab(), "Settings / Device")
+        self.tabs.addTab(self._create_settings_tab(), "My Account")
         main_layout.addWidget(self.tabs)
 
         # Hardware ID Footer pill
@@ -343,41 +343,61 @@ class AuthDialog(QDialog):
         layout.setContentsMargins(20, 20, 20, 20)
         layout.setSpacing(14)
 
-        # Server URL config
-        lbl_server = QLabel("License Server Endpoint:")
-        lbl_server.setFont(QFont("Segoe UI", 10, QFont.Weight.DemiBold))
-        self.server_url_input = QLineEdit()
-        self.server_url_input.setText(license_client.server_url)
-        layout.addWidget(lbl_server)
-        layout.addWidget(self.server_url_input)
-
-        save_srv_btn = QPushButton("Save Server URL")
-        save_srv_btn.setProperty("class", "outline-btn")
-        save_srv_btn.clicked.connect(self._on_save_server_url)
-        layout.addWidget(save_srv_btn)
-
-        # Account details if cached
-        layout.addSpacing(10)
-        lbl_acc = QLabel("Current Session:")
-        lbl_acc.setFont(QFont("Segoe UI", 10, QFont.Weight.DemiBold))
+        lbl_acc = QLabel("Account & License Overview:")
+        lbl_acc.setFont(QFont("Segoe UI", 11, QFont.Weight.Bold))
+        lbl_acc.setStyleSheet("color: #6366f1;")
         layout.addWidget(lbl_acc)
 
         if license_client.user_data:
             u = license_client.user_data
-            status_str = f"Account: {u.get('email', 'N/A')}\nStatus: {u.get('status', 'N/A').upper()}\nPlan: {license_client.get_plan_display()}"
-            self.session_info_lbl = QLabel(status_str)
-            self.session_info_lbl.setStyleSheet("background: rgba(255,255,255,0.03); padding: 10px; border-radius: 6px; font-size: 12px;")
+            email = u.get("email", "N/A")
+            full_name = u.get("full_name", "")
+            status = u.get("status", "Active").upper()
+            plan = license_client.get_plan_display()
+            expires = u.get("expires_at", "Never (Lifetime)")
+            if expires and "T" in str(expires):
+                expires = str(expires).split("T")[0]
+            
+            info_html = f"""
+            <div style='line-height: 1.6; font-size: 13px;'>
+                <b>User:</b> {full_name} ({email})<br>
+                <b>License Status:</b> <span style='color:#10b981; font-weight:bold;'>{status}</span><br>
+                <b>Plan:</b> <span style='color:#a5b4fc; font-weight:bold;'>{plan}</span><br>
+                <b>Expiry:</b> {expires}<br>
+                <b>Device Locked:</b> Bound to this PC
+            </div>
+            """
+            self.session_info_lbl = QLabel(info_html)
+            self.session_info_lbl.setTextFormat(Qt.TextFormat.RichText)
+            self.session_info_lbl.setStyleSheet(
+                "background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 14px; border-radius: 8px;"
+            )
             layout.addWidget(self.session_info_lbl)
 
+            layout.addSpacing(8)
             logout_btn = QPushButton("Log Out & Clear Session")
             logout_btn.setProperty("class", "outline-btn")
-            logout_btn.setStyleSheet("color: #fb7185; border-color: rgba(244,63,94,0.3);")
+            logout_btn.setStyleSheet("color: #fb7185; border-color: rgba(244,63,94,0.3); font-weight: 600;")
+            logout_btn.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
             logout_btn.clicked.connect(self._on_logout_clicked)
             layout.addWidget(logout_btn)
         else:
-            no_acc_lbl = QLabel("No active session saved.")
-            no_acc_lbl.setStyleSheet("color: #9ca3af; font-size: 12px;")
-            layout.addWidget(no_acc_lbl)
+            no_acc_card = QLabel(
+                "<b>No Active Session</b><br><br>"
+                "Sign in or register from the tabs above to activate this device."
+            )
+            no_acc_card.setTextFormat(Qt.TextFormat.RichText)
+            no_acc_card.setStyleSheet(
+                "background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); padding: 16px; border-radius: 8px; color: #9ca3af;"
+            )
+            layout.addWidget(no_acc_card)
+
+        # Support note
+        support_note = QLabel("💬 For subscription renewals, plan upgrades, or support, please contact your provider.")
+        support_note.setFont(QFont("Segoe UI", 9))
+        support_note.setStyleSheet("color: #6b7280; font-style: italic;")
+        support_note.setWordWrap(True)
+        layout.addWidget(support_note)
 
         layout.addStretch()
         return widget
@@ -400,14 +420,6 @@ class AuthDialog(QDialog):
         clipboard = QApplication.clipboard()
         clipboard.setText(license_client.hwid)
         QMessageBox.information(self, "Copied", f"Hardware ID copied to clipboard:\n\n{license_client.hwid}")
-
-    def _on_save_server_url(self):
-        new_url = self.server_url_input.text().strip()
-        if not new_url.startswith("http://") and not new_url.startswith("https://"):
-            QMessageBox.warning(self, "Invalid URL", "Server URL must start with http:// or https://")
-            return
-        license_client.save_server_url(new_url)
-        QMessageBox.information(self, "Saved", f"License Server URL updated to:\n{new_url}")
 
     def _on_logout_clicked(self):
         license_client.clear_session()

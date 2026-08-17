@@ -4,7 +4,10 @@ import requests
 from typing import Optional, Dict, Any, Tuple
 from licensing.hwid import get_hardware_id
 
-DEFAULT_SERVER_URL = os.getenv("DOLA_LICENSE_SERVER_URL", "http://localhost:8000")
+DEFAULT_SERVER_URL = os.getenv(
+    "DOLA_LICENSE_SERVER_URL",
+    "https://dola-license-server-gullubut2-gmailcoms-projects.vercel.app"
+)
 SESSION_FILE_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".license_session.json")
 CONFIG_FILE_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "license_config.json")
 
