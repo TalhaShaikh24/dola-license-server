@@ -3,6 +3,7 @@ import os
 import traceback
 from PyQt6.QtWidgets import QApplication, QMessageBox, QDialog
 from PyQt6.QtGui import QIcon
+from PyQt6.QtCore import QSize
 from ui import MainWindow
 from licensing.license_client import license_client
 from licensing.auth_dialog import AuthDialog
@@ -25,10 +26,16 @@ def main():
         app.setOrganizationName("Talha Shaikh")
         app.setOrganizationDomain("talhashaikh.com")
         
-        # Set Application & Window Icon
+        # Set High-Resolution Crisp Application & Window Icon
         icon_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "app_icon.ico")
+        png_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "app_icon.png")
         if os.path.exists(icon_path):
-            app.setWindowIcon(QIcon(icon_path))
+            app_icon = QIcon()
+            for sz in [16, 24, 32, 48, 64, 96, 128, 256]:
+                app_icon.addFile(icon_path, QSize(sz, sz))
+            if os.path.exists(png_path):
+                app_icon.addFile(png_path, QSize(256, 256))
+            app.setWindowIcon(app_icon)
         
         # Online License Verification on startup
         valid, msg, user_data = license_client.verify_current_session()

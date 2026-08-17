@@ -218,10 +218,14 @@ class DialogTitleBar(QWidget):
         layout.setContentsMargins(14, 0, 8, 0)
         layout.setSpacing(8)
 
-        icon_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "app_icon.ico")
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        png_path = os.path.join(base_dir, "app_icon.png")
+        ico_path = os.path.join(base_dir, "app_icon.ico")
+        target_img = png_path if os.path.exists(png_path) else ico_path
         icon_lbl = QLabel()
-        if os.path.exists(icon_path):
-            pix = QPixmap(icon_path).scaled(18, 18, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+        if os.path.exists(target_img):
+            pix = QPixmap(target_img).scaled(36, 36, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+            pix.setDevicePixelRatio(2.0)
             icon_lbl.setPixmap(pix)
         else:
             icon_lbl.setText("✨")
@@ -539,12 +543,16 @@ class AuthDialog(QDialog):
 
         # Header with Logo & Brand
         header_layout = QHBoxLayout()
-        header_layout.setSpacing(12)
+        header_layout.setSpacing(14)
         
         brand_icon = QLabel()
-        icon_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "app_icon.ico")
-        if os.path.exists(icon_path):
-            pix = QPixmap(icon_path).scaled(36, 36, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        png_path = os.path.join(base_dir, "app_icon.png")
+        ico_path = os.path.join(base_dir, "app_icon.ico")
+        target_img = png_path if os.path.exists(png_path) else ico_path
+        if os.path.exists(target_img):
+            pix = QPixmap(target_img).scaled(80, 80, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+            pix.setDevicePixelRatio(2.0)
             brand_icon.setPixmap(pix)
         else:
             brand_icon.setText("✨")

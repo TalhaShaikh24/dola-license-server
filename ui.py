@@ -643,10 +643,13 @@ class CustomTitleBar(QWidget):
         layout.setSpacing(10)
 
         # App Icon & Title
-        icon_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "app_icon.ico")
+        png_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "app_icon.png")
+        ico_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "app_icon.ico")
+        target_img = png_path if os.path.exists(png_path) else ico_path
         icon_lbl = QLabel()
-        if os.path.exists(icon_path):
-            pix = QPixmap(icon_path).scaled(22, 22, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+        if os.path.exists(target_img):
+            pix = QPixmap(target_img).scaled(48, 48, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+            pix.setDevicePixelRatio(2.0)
             icon_lbl.setPixmap(pix)
         else:
             icon_lbl.setText("✨")
