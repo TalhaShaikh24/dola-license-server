@@ -80,13 +80,16 @@ class LicenseClient:
         }
         try:
             res = requests.post(url, json=payload, timeout=10)
-            data = res.json()
+            try:
+                data = res.json()
+            except Exception:
+                return False, f"Server error ({res.status_code}). Please try again.", {}
             if res.status_code == 200 and data.get("success"):
                 return True, data.get("message", "Registration submitted"), data
             else:
                 return False, data.get("detail", data.get("message", "Registration failed")), data
         except requests.exceptions.ConnectionError:
-            return False, f"Could not connect to license server at {self.server_url}. Please ensure server is running and online.", {}
+            return False, "Could not connect to license server. Please ensure internet is connected.", {}
         except Exception as e:
             return False, f"Registration error: {str(e)}", {}
 
@@ -103,7 +106,10 @@ class LicenseClient:
         }
         try:
             res = requests.post(url, json=payload, timeout=10)
-            data = res.json()
+            try:
+                data = res.json()
+            except Exception:
+                return False, f"Server error ({res.status_code}). Please try again.", {}
             
             if res.status_code == 200 and data.get("success"):
                 token = data.get("token")
@@ -111,11 +117,10 @@ class LicenseClient:
                 self._save_session(token, user)
                 return True, "Login successful", data
             else:
-                error_type = data.get("error", "auth_failed")
                 msg = data.get("message", data.get("detail", "Login failed"))
                 return False, msg, data
         except requests.exceptions.ConnectionError:
-            return False, f"Could not connect to license server at {self.server_url}. Check network or server status.", {}
+            return False, "Could not reach license server. Check internet connection.", {}
         except Exception as e:
             return False, f"Login error: {str(e)}", {}
 

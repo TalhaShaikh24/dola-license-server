@@ -222,83 +222,91 @@ def reset_password(req: ResetPasswordRequest):
 
 @app.post("/api/auth/login")
 def login_user(req: LoginRequest):
-    email = req.email.strip().lower()
-    user = get_user_by_email(email)
-    
-    if not user or not verify_password(req.password, user["password_hash"]):
-        raise HTTPException(status_code=401, detail="Invalid email or password")
+    try:
+        email = req.email.strip().lower()
+        user = get_user_by_email(email)
         
-    # Check Email Verification
-    if user.get("is_email_verified") == 0:
-        return {
-            "success": False,
-            "error": "email_not_verified",
-            "message": "Your email address is not verified yet. Please enter the verification code sent to your email."
-        }
-        
-    # Check Approval Status
-    if user["status"] == "pending":
-        return {
-            "success": False,
-            "error": "pending_approval",
-            "message": "Your account is pending Super Admin approval. Please contact administrator."
-        }
-    if user["status"] == "suspended":
-        return {
-            "success": False,
-            "error": "suspended",
-            "message": "Your account has been suspended by the administrator."
-        }
-        
-    # Check Expiry
-    if check_user_expiry(user):
-        set_user_status(user["id"], "expired")
-        return {
-            "success": False,
-            "error": "expired",
-            "message": "Your subscription has expired. Please contact administrator to renew."
-        }
-
-    # HWID Single-Device Lock Check
-    current_hwid = req.hwid.strip() if req.hwid else ""
-    bound_hwid = user.get("hwid")
-    
-    if bound_hwid and bound_hwid.strip():
-        if bound_hwid.strip() != current_hwid:
+        if not user or not verify_password(req.password, user.get("password_hash", "")):
             return {
                 "success": False,
-                "error": "device_mismatch",
-                "message": f"Single-device restriction: This account is already bound to another PC ({bound_hwid}). Contact admin to transfer or reset your device.",
-                "bound_hwid": bound_hwid
+                "error": "invalid_credentials",
+                "message": "Invalid email address or password. Please check your credentials."
             }
-    else:
-        # Bind device on first login
-        update_login_and_hwid(user["id"], current_hwid)
-        user = get_user_by_id(user["id"])
+            
+        # Check Email Verification
+        if user.get("is_email_verified") == 0:
+            return {
+                "success": False,
+                "error": "email_not_verified",
+                "message": "Your email address is not verified yet. Please enter the verification code sent to your email."
+            }
+            
+        # Check Approval Status
+        if user["status"] == "pending":
+            return {
+                "success": False,
+                "error": "pending_approval",
+                "message": "Your account is pending Super Admin approval. Please contact administrator."
+            }
+        if user["status"] == "suspended":
+            return {
+                "success": False,
+                "error": "suspended",
+                "message": "Your account has been suspended by the administrator."
+            }
+            
+        # Check Expiry
+        if check_user_expiry(user):
+            set_user_status(user["id"], "expired")
+            return {
+                "success": False,
+                "error": "expired",
+                "message": "Your subscription has expired. Please contact administrator to renew."
+            }
+
+        # HWID Single-Device Lock Check
+        current_hwid = req.hwid.strip() if req.hwid else ""
+        bound_hwid = user.get("hwid")
         
-    update_login_and_hwid(user["id"], current_hwid)
-    
-    # Generate Token
-    token = create_access_token({
-        "sub": str(user["id"]),
-        "email": user["email"],
-        "hwid": current_hwid,
-        "role": "user"
-    }, expires_delta=datetime.timedelta(days=14))
-    
-    return {
-        "success": True,
-        "token": token,
-        "user": {
-            "id": user["id"],
+        if bound_hwid and bound_hwid.strip():
+            if bound_hwid.strip() != current_hwid:
+                return {
+                    "success": False,
+                    "error": "device_mismatch",
+                    "message": f"Single-device restriction: This account is already bound to another PC ({bound_hwid}). Contact admin to transfer or reset your device.",
+                    "bound_hwid": bound_hwid
+                }
+        else:
+            update_login_and_hwid(user["id"], current_hwid)
+            user = get_user_by_id(user["id"])
+            
+        update_login_and_hwid(user["id"], current_hwid)
+        
+        # Generate Token
+        token = create_access_token({
+            "sub": str(user["id"]),
             "email": user["email"],
-            "full_name": user["full_name"],
-            "status": user["status"],
-            "plan_type": user["plan_type"],
-            "expires_at": user["expires_at"],
-            "hwid": user["hwid"]
+            "hwid": current_hwid,
+            "role": "user"
+        }, expires_delta=datetime.timedelta(days=14))
+        
+        return {
+            "success": True,
+            "token": token,
+            "user": {
+                "id": user["id"],
+                "email": user["email"],
+                "full_name": user["full_name"],
+                "status": user["status"],
+                "plan_type": user["plan_type"],
+                "expires_at": user["expires_at"],
+                "hwid": user["hwid"]
+            }
         }
-    }
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {"success": False, "error": "server_error", "message": f"Login error: {str(e)}"}
 
 @app.post("/api/auth/verify")
 def verify_session(req: VerifyRequest):
