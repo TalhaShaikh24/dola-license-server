@@ -21,11 +21,13 @@ from database import (
     delete_user,
     update_login_and_hwid,
     verify_admin,
-    verify_password,
+    update_admin_password,
     set_user_verification_otp,
     verify_user_email_otp,
     set_password_reset_otp,
-    reset_password_with_otp
+    reset_password_with_otp,
+    record_usage_event,
+    get_admin_analytics_summary
 )
 from email_service import send_verification_email, send_password_reset_email
 
@@ -70,6 +72,12 @@ class ResetPasswordRequest(BaseModel):
     email: str
     otp: str
     new_password: str
+
+class LogEventRequest(BaseModel):
+    token: str
+    op_type: str
+    count: int = 1
+    details: Optional[str] = None
 
 class LoginRequest(BaseModel):
     email: str
@@ -342,6 +350,24 @@ def verify_session(req: VerifyRequest):
         }
     }
 
+# --- Usage Analytics Endpoints ---
+
+@app.post("/api/analytics/log-event")
+def log_usage_event(req: LogEventRequest):
+    try:
+        payload = decode_token(req.token)
+        user_id = int(payload.get("sub"))
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid session token")
+        
+    success = record_usage_event(
+        user_id=user_id,
+        op_type=req.op_type,
+        item_count=req.count,
+        details=req.details
+    )
+    return {"success": success}
+
 # --- Super Admin Endpoints ---
 
 @app.post("/api/admin/login")
@@ -359,6 +385,12 @@ def admin_login(req: AdminLoginRequest):
         "token": token,
         "username": req.username
     }
+
+@app.get("/api/admin/analytics")
+def get_admin_analytics(admin=Depends(get_current_admin)):
+    """Return comprehensive video processing analytics and activity logs."""
+    summary = get_admin_analytics_summary()
+    return summary
 
 @app.get("/api/admin/stats")
 def get_admin_stats(admin=Depends(get_current_admin)):

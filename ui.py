@@ -1408,6 +1408,13 @@ class MainWindow(QMainWindow):
         self.log(message)
         
         if success:
+            # Report usage analytics asynchronously
+            is_batch = (self.tabs.currentIndex() == 1)
+            count = len(self.batch_video_files) if is_batch else 1
+            op_type = "watermark_batch" if is_batch else "watermark_single"
+            details = f"Batch of {count} videos" if is_batch else os.path.basename(self.selected_single_video or "video")
+            license_client.log_usage_async(op_type, count=count, details=details)
+
             QMessageBox.information(
                 self, "Watermark Removal Complete",
                 f"{message}\n\nYour processed videos are ready in the 'Combine Clips' gallery."
@@ -1516,6 +1523,11 @@ class MainWindow(QMainWindow):
         self.log(message)
         
         if success and meta and os.path.exists(meta.get("path", "")):
+            # Report combine analytics asynchronously
+            num_clips = meta.get("video_count", 2)
+            out_name = os.path.basename(meta.get("path", "merged.mp4"))
+            license_client.log_usage_async("video_combine", count=num_clips, details=f"Combined {num_clips} clips into {out_name}")
+
             # Show rich Success Dialog
             dlg = MergeSuccessDialog(meta, self)
             dlg.exec()

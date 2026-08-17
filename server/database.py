@@ -76,11 +76,28 @@ def init_db(db_path: Optional[str] = None):
             ("verification_code_expires_at", "TEXT"),
             ("reset_code", "TEXT"),
             ("reset_code_expires_at", "TEXT"),
+            ("watermark_count", "INTEGER DEFAULT 0"),
+            ("combine_count", "INTEGER DEFAULT 0"),
+            ("total_ops_count", "INTEGER DEFAULT 0"),
+            ("last_activity_at", "TEXT"),
         ]:
             try:
                 cursor.execute(f"ALTER TABLE users ADD COLUMN {col_def[0]} {col_def[1]}")
             except Exception:
                 pass
+
+        # Activity Logs table for detailed analytics
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS activity_logs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER,
+                email TEXT,
+                op_type TEXT NOT NULL,
+                item_count INTEGER DEFAULT 1,
+                details TEXT,
+                created_at TEXT NOT NULL
+            )
+        """)
         
         # Admin table
         cursor.execute("""
@@ -329,3 +346,104 @@ def reset_password_with_otp(email: str, otp_code: str, new_password_raw: str, db
         )
         conn.commit()
     return True, "Password reset successfully! You can now sign in with your new password."
+
+def record_usage_event(user_id: int, op_type: str, item_count: int = 1, details: Optional[str] = None, db_path: Optional[str] = None) -> bool:
+    """Record a video processing event (watermark removal or video combine) and update user stats."""
+    user = get_user_by_id(user_id, db_path)
+    if not user:
+        return False
+    
+    now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    email = user.get("email", "")
+    
+    is_watermark = "watermark" in op_type
+    is_combine = "combine" in op_type
+    
+    wm_increment = item_count if is_watermark else 0
+    combine_increment = item_count if is_combine else 0
+    total_increment = item_count
+    
+    with get_connection(db_path) as conn:
+        cursor = conn.cursor()
+        
+        # 1. Update user aggregate counts
+        cursor.execute(
+            """
+            UPDATE users 
+            SET watermark_count = COALESCE(watermark_count, 0) + ?,
+                combine_count = COALESCE(combine_count, 0) + ?,
+                total_ops_count = COALESCE(total_ops_count, 0) + ?,
+                last_activity_at = ?
+            WHERE id = ?
+            """,
+            (wm_increment, combine_increment, total_increment, now_iso, user_id)
+        )
+        
+        # 2. Insert into activity log
+        cursor.execute(
+            """
+            INSERT INTO activity_logs (user_id, email, op_type, item_count, details, created_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (user_id, email, op_type, item_count, details or "", now_iso)
+        )
+        conn.commit()
+    return True
+
+def get_admin_analytics_summary(db_path: Optional[str] = None) -> Dict[str, Any]:
+    """Calculate comprehensive SaaS video processing metrics and activity logs."""
+    with get_connection(db_path) as conn:
+        cursor = conn.cursor()
+        
+        # 1. Aggregates from users table
+        cursor.execute("""
+            SELECT 
+                COUNT(*) as total_users,
+                COALESCE(SUM(watermark_count), 0) as total_watermarks_removed,
+                COALESCE(SUM(combine_count), 0) as total_videos_combined,
+                COALESCE(SUM(total_ops_count), 0) as total_operations
+            FROM users
+        """)
+        agg = dict(cursor.fetchone() or {})
+        
+        # 2. Top Active Users Leaderboard
+        cursor.execute("""
+            SELECT id, email, full_name, plan_type, status, watermark_count, combine_count, total_ops_count, last_activity_at
+            FROM users
+            WHERE COALESCE(total_ops_count, 0) > 0
+            ORDER BY total_ops_count DESC
+            LIMIT 10
+        """)
+        top_users = [dict(r) for r in cursor.fetchall()]
+        
+        # 3. Recent Activity Logs (Last 25 operations)
+        cursor.execute("""
+            SELECT id, user_id, email, op_type, item_count, details, created_at
+            FROM activity_logs
+            ORDER BY id DESC
+            LIMIT 25
+        """)
+        recent_activities = [dict(r) for r in cursor.fetchall()]
+        
+        # 4. Today's Activity count (last 24 hours)
+        yesterday_iso = (datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(hours=24)).isoformat()
+        cursor.execute("""
+            SELECT 
+                COALESCE(SUM(CASE WHEN op_type LIKE '%watermark%' THEN item_count ELSE 0 END), 0) as today_watermarks,
+                COALESCE(SUM(CASE WHEN op_type LIKE '%combine%' THEN item_count ELSE 0 END), 0) as today_combines,
+                COUNT(DISTINCT user_id) as active_users_24h
+            FROM activity_logs
+            WHERE created_at >= ?
+        """, (yesterday_iso,))
+        today_stats = dict(cursor.fetchone() or {})
+        
+        return {
+            "total_watermarks_removed": agg.get("total_watermarks_removed", 0),
+            "total_videos_combined": agg.get("total_videos_combined", 0),
+            "total_operations": agg.get("total_operations", 0),
+            "today_watermarks": today_stats.get("today_watermarks", 0),
+            "today_combines": today_stats.get("today_combines", 0),
+            "active_users_today": today_stats.get("active_users_24h", 0),
+            "top_users": top_users,
+            "recent_activities": recent_activities
+        }

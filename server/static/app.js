@@ -1,8 +1,10 @@
-// Super Admin SaaS Dashboard Frontend Controller
+// Super Admin SaaS Dashboard Frontend Controller - with Video Processing Analytics
 let currentAdminToken = localStorage.getItem("dola_admin_token") || null;
 let currentUsers = [];
+let currentAnalytics = null;
 let activeFilter = "all";
 let targetUserIdToApprove = null;
+let currentActiveTab = "users";
 
 // DOM Elements
 const loginSection = document.getElementById("loginSection");
@@ -78,9 +80,9 @@ function setupEventListeners() {
     });
 
     // Filter Buttons
-    document.querySelectorAll(".filter-btn").forEach(btn => {
+    document.querySelectorAll(".filter-pills .filter-btn").forEach(btn => {
         btn.addEventListener("click", (e) => {
-            document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+            document.querySelectorAll(".filter-pills .filter-btn").forEach(b => b.classList.remove("active"));
             btn.classList.add("active");
             activeFilter = btn.dataset.status;
             renderUsers();
@@ -115,7 +117,7 @@ function setupEventListeners() {
 
         try {
             confirmApproveBtn.disabled = true;
-            const res = await apiRequest(`/api/admin/users/${targetUserIdToApprove}/approve`, "POST", {
+            await apiRequest(`/api/admin/users/${targetUserIdToApprove}/approve`, "POST", {
                 plan_type: selectedPlan,
                 custom_date: customDateVal,
                 notes: adminNote.value.trim() || null
@@ -130,6 +132,27 @@ function setupEventListeners() {
             confirmApproveBtn.disabled = false;
         }
     });
+}
+
+function switchDashboardTab(tab) {
+    currentActiveTab = tab;
+    const viewUsers = document.getElementById("viewUsersSection");
+    const viewAnalytics = document.getElementById("viewAnalyticsSection");
+    const tabBtnUsers = document.getElementById("tabBtnUsers");
+    const tabBtnAnalytics = document.getElementById("tabBtnAnalytics");
+
+    if (tab === "users") {
+        viewUsers.classList.remove("hidden");
+        viewAnalytics.classList.add("hidden");
+        tabBtnUsers.classList.add("active");
+        tabBtnAnalytics.classList.remove("active");
+    } else {
+        viewUsers.classList.add("hidden");
+        viewAnalytics.classList.remove("hidden");
+        tabBtnUsers.classList.remove("active");
+        tabBtnAnalytics.classList.add("active");
+        loadAnalyticsData();
+    }
 }
 
 function showLogin() {
@@ -165,24 +188,110 @@ async function apiRequest(endpoint, method = "GET", body = null) {
 
 async function loadDashboardData() {
     try {
-        const [stats, usersData] = await Promise.all([
+        const [stats, usersData, analyticsData] = await Promise.all([
             apiRequest("/api/admin/stats"),
-            apiRequest("/api/admin/users")
+            apiRequest("/api/admin/users"),
+            apiRequest("/api/admin/analytics")
         ]);
         
-        // Update Stats
-        document.getElementById("statTotal").textContent = stats.total;
-        document.getElementById("statPending").textContent = stats.pending;
-        document.getElementById("statActive").textContent = stats.active;
-        document.getElementById("statExpired").textContent = stats.expired + stats.suspended;
+        // Update Video Processing Hero Metrics
+        document.getElementById("statWatermarks").textContent = (analyticsData.total_watermarks_removed || 0).toLocaleString();
+        document.getElementById("statWatermarksToday").textContent = (analyticsData.today_watermarks || 0).toLocaleString();
         
-        document.getElementById("countAll").textContent = stats.total;
-        document.getElementById("countPending").textContent = stats.pending;
+        document.getElementById("statCombines").textContent = (analyticsData.total_videos_combined || 0).toLocaleString();
+        document.getElementById("statCombinesToday").textContent = (analyticsData.today_combines || 0).toLocaleString();
+        
+        document.getElementById("statActive").textContent = stats.active || 0;
+        document.getElementById("statActiveToday").textContent = (analyticsData.active_users_today || 0);
+        
+        document.getElementById("statPending").textContent = stats.pending || 0;
+        document.getElementById("statTotalUsers").textContent = stats.total || 0;
+        
+        document.getElementById("countAll").textContent = stats.total || 0;
+        document.getElementById("countPending").textContent = stats.pending || 0;
+        document.getElementById("countTabUsers").textContent = stats.total || 0;
 
         currentUsers = usersData.users || [];
+        currentAnalytics = analyticsData;
+
         renderUsers();
+        renderAnalyticsViews(analyticsData);
     } catch (err) {
         console.error(err);
+    }
+}
+
+async function loadAnalyticsData() {
+    try {
+        const analyticsData = await apiRequest("/api/admin/analytics");
+        currentAnalytics = analyticsData;
+        renderAnalyticsViews(analyticsData);
+        showToast("Analytics feed updated", "info");
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+function renderAnalyticsViews(data) {
+    if (!data) return;
+
+    // 1. Leaderboard
+    const lbBody = document.getElementById("leaderboardBody");
+    const topUsers = data.top_users || [];
+    if (topUsers.length === 0) {
+        lbBody.innerHTML = `<tr><td colspan="5" class="empty-state" style="text-align:center; padding: 24px; color: var(--text-muted);">No video operations recorded yet.</td></tr>`;
+    } else {
+        lbBody.innerHTML = topUsers.map((u, idx) => {
+            const medal = idx === 0 ? "🥇 " : idx === 1 ? "🥈 " : idx === 2 ? "🥉 " : `#${idx+1} `;
+            return `
+                <tr>
+                    <td>
+                        <strong>${medal}${escapeHtml(u.full_name || 'Anonymous')}</strong>
+                        <div style="font-size: 11px; color: var(--text-muted);">${escapeHtml(u.email)}</div>
+                    </td>
+                    <td><span class="badge" style="font-size:11px;">${formatPlanName(u.plan_type)}</span></td>
+                    <td><strong style="color: #a5b4fc;">🎬 ${u.watermark_count || 0}</strong></td>
+                    <td><strong style="color: #60a5fa;">🎞️ ${u.combine_count || 0}</strong></td>
+                    <td><strong style="color: #10b981;">⚡ ${u.total_ops_count || 0}</strong></td>
+                </tr>
+            `;
+        }).join("");
+    }
+
+    // 2. Activity Feed
+    const feedList = document.getElementById("activityFeedList");
+    const activities = data.recent_activities || [];
+    if (activities.length === 0) {
+        feedList.innerHTML = `<div class="empty-state" style="text-align:center; padding: 24px; color: var(--text-muted);">No recent video processing activity.</div>`;
+    } else {
+        feedList.innerHTML = activities.map(act => {
+            const isWm = act.op_type.includes("watermark");
+            const icon = isWm ? "🎬" : "🎞️";
+            const badgeClass = isWm ? "badge-purple" : "badge-blue";
+            const typeLabel = isWm ? "Watermark Removal" : "Video Combine";
+            const timeAgo = formatTimeAgo(act.created_at);
+
+            return `
+                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 8px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 18px;">${icon}</span>
+                        <div>
+                            <div style="font-size: 13px; font-weight: 600; color: #ffffff;">
+                                ${escapeHtml(act.email)}
+                                <span style="font-size: 11px; margin-left: 6px; padding: 2px 6px; border-radius: 4px; background: rgba(99,102,241,0.15); color:#a5b4fc;">${typeLabel}</span>
+                            </div>
+                            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">
+                                ${escapeHtml(act.details || (act.item_count + ' items processed'))}
+                            </div>
+                        </div>
+                    </div>
+                    <div style="font-size: 11px; color: #9ca3af; text-align: right;">
+                        <strong>${act.item_count} clip(s)</strong><br>
+                        ${timeAgo}
+                    </div>
+                </div>
+            `;
+        }).join("");
     }
 }
 
@@ -207,7 +316,7 @@ function renderUsers() {
     if (filtered.length === 0) {
         userTableBody.innerHTML = `
             <tr>
-                <td colspan="7" class="empty-state" style="text-align:center; padding: 40px; color: var(--text-muted);">
+                <td colspan="8" class="empty-state" style="text-align:center; padding: 40px; color: var(--text-muted);">
                     No users found matching your criteria.
                 </td>
             </tr>
@@ -221,11 +330,23 @@ function renderUsers() {
         const expiryFormatted = formatExpiry(user.expires_at, user.plan_type);
         const hwidCell = formatHwid(user.hwid);
         const registeredDate = user.created_at ? new Date(user.created_at).toLocaleDateString() : "-";
+        const emailVerifiedBadge = user.is_email_verified === 1 
+            ? `<span style="font-size:10px; color:#10b981; margin-left:4px;" title="Email Verified">✓ Verified</span>`
+            : `<span style="font-size:10px; color:#fbbf24; margin-left:4px;" title="Email Unverified">✉️ Unverified</span>`;
+
+        const wmCount = user.watermark_count || 0;
+        const combCount = user.combine_count || 0;
+        const usageCell = `
+            <div style="font-size: 12px; line-height: 1.4;">
+                <span style="color: #a5b4fc; font-weight: 600;" title="Watermarks Removed">🎬 ${wmCount}</span> &bull; 
+                <span style="color: #60a5fa; font-weight: 600;" title="Videos Combined">🎞️ ${combCount}</span>
+            </div>
+        `;
 
         return `
             <tr>
                 <td>
-                    <div class="user-name-col">${escapeHtml(user.full_name || 'Anonymous')}</div>
+                    <div class="user-name-col">${escapeHtml(user.full_name || 'Anonymous')} ${emailVerifiedBadge}</div>
                     <div class="user-email-sub">${escapeHtml(user.email)}</div>
                 </td>
                 <td>${statusBadge}</td>
@@ -234,6 +355,7 @@ function renderUsers() {
                         ${planName} ✏️
                     </button>
                 </td>
+                <td>${usageCell}</td>
                 <td>${expiryFormatted}</td>
                 <td>${hwidCell}</td>
                 <td style="color: var(--text-muted); font-size: 13px;">${registeredDate}</td>
@@ -319,6 +441,19 @@ function formatHwid(hwid) {
         return `<span class="hwid-unbound">Not Bound Yet</span>`;
     }
     return `<span class="hwid-badge" title="${escapeHtml(hwid)}">🔒 ${escapeHtml(hwid)}</span>`;
+}
+
+function formatTimeAgo(isoString) {
+    if (!isoString) return "";
+    const date = new Date(isoString);
+    const seconds = Math.floor((new Date() - date) / 1000);
+    if (seconds < 60) return "just now";
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    return `${days}d ago`;
 }
 
 function openApproveModal(userId, email) {

@@ -191,6 +191,28 @@ class LicenseClient:
         except Exception as e:
             return False, f"Network error: {str(e)}"
 
+    def log_usage_async(self, op_type: str, count: int = 1, details: str = ""):
+        """Asynchronously log video processing operations to SaaS analytics without blocking."""
+        if not self.session_token:
+            return
+            
+        import threading
+        def _send():
+            try:
+                url = f"{self.server_url}/api/analytics/log-event"
+                payload = {
+                    "token": self.session_token,
+                    "op_type": op_type,
+                    "count": count,
+                    "details": str(details)[:200]
+                }
+                requests.post(url, json=payload, timeout=8)
+            except Exception:
+                pass
+                
+        t = threading.Thread(target=_send, daemon=True)
+        t.start()
+
     def get_plan_display(self) -> str:
         if not self.user_data:
             return "No Active License"
