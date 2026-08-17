@@ -11,7 +11,7 @@ from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout,
     QPushButton, QLabel, QSlider, QComboBox, QProgressBar, QTextEdit,
     QFileDialog, QMessageBox, QTabWidget, QGroupBox, QSplitter, QDialog,
-    QCheckBox, QStackedWidget, QFrame, QSizePolicy, QScrollArea
+    QCheckBox, QStackedWidget, QFrame, QSizePolicy, QScrollArea, QSpinBox
 )
 from remover import WatermarkRemoverWorker, get_video_preview_frame, create_mask_for_frame
 from video_combiner import VideoCombinerWorker, get_media_properties, format_duration, format_file_size
@@ -399,11 +399,17 @@ class ROISelectionCanvas(QWidget):
     def get_handles_widget_rects(self, wx, wy, ww, wh):
         hs = self.handle_size
         hs_half = hs // 2
+        
+        # 8 handles: 4 corners + 4 midpoints
         return {
             'tl': QRect(wx - hs_half, wy - hs_half, hs, hs),
             'tr': QRect(wx + ww - hs_half, wy - hs_half, hs, hs),
             'bl': QRect(wx - hs_half, wy + wh - hs_half, hs, hs),
-            'br': QRect(wx + ww - hs_half, wy + wh - hs_half, hs, hs)
+            'br': QRect(wx + ww - hs_half, wy + wh - hs_half, hs, hs),
+            't':  QRect(wx + ww//2 - hs_half, wy - hs_half, hs, hs),
+            'b':  QRect(wx + ww//2 - hs_half, wy + wh - hs_half, hs, hs),
+            'l':  QRect(wx - hs_half, wy + wh//2 - hs_half, hs, hs),
+            'r':  QRect(wx + ww - hs_half, wy + wh//2 - hs_half, hs, hs)
         }
         
     def mousePressEvent(self, event):
@@ -419,32 +425,36 @@ class ROISelectionCanvas(QWidget):
         ww = int(self.roi_rect["width"] * scale)
         wh = int(self.roi_rect["height"] * scale)
         
+        # Generous hit test for handles (expanded by 6px)
+        hit_padding = 8
         handles = self.get_handles_widget_rects(wx, wy, ww, wh)
         for handle_name, rect in handles.items():
-            if rect.contains(int(mx), int(my)):
+            hit_rect = rect.adjusted(-hit_padding, -hit_padding, hit_padding, hit_padding)
+            if hit_rect.contains(int(mx), int(my)):
                 self.active_handle = handle_name
                 self.drag_start = QPoint(int(mx), int(my))
-                self.drag_rect_start = QRect(wx, wy, ww, wh)
+                self.drag_rect_start = QRect(self.roi_rect["x"], self.roi_rect["y"], self.roi_rect["width"], self.roi_rect["height"])
                 return
                 
         roi_box = QRect(wx, wy, ww, wh)
         if roi_box.contains(int(mx), int(my)):
             self.active_handle = 'move'
             self.drag_start = QPoint(int(mx), int(my))
-            self.drag_rect_start = QRect(wx, wy, ww, wh)
+            self.drag_rect_start = QRect(self.roi_rect["x"], self.roi_rect["y"], self.roi_rect["width"], self.roi_rect["height"])
             self.setCursor(Qt.CursorShape.SizeAllCursor)
             return
             
+        # Draw new box from click point
         self.active_handle = 'draw'
         self.drag_start = QPoint(int(mx), int(my))
         
-        ix = (mx - x_off) / scale
-        iy = (my - y_off) / scale
-        ix = max(0, min(int(ix), self.raw_image_width - 1))
-        iy = max(0, min(int(iy), self.raw_image_height - 1))
+        ix = int((mx - x_off) / scale)
+        iy = int((my - y_off) / scale)
+        ix = max(0, min(ix, self.raw_image_width - 1))
+        iy = max(0, min(iy, self.raw_image_height - 1))
         
         self.roi_rect = {
-            "x": ix, "y": iy, "width": 1, "height": 1,
+            "x": ix, "y": iy, "width": 10, "height": 10,
             "ref_width": self.raw_image_width, "ref_height": self.raw_image_height
         }
         self.update()
@@ -465,71 +475,82 @@ class ROISelectionCanvas(QWidget):
             wh = int(self.roi_rect["height"] * scale)
             
             handles = self.get_handles_widget_rects(wx, wy, ww, wh)
-            if handles['tl'].contains(int(mx), int(my)) or handles['br'].contains(int(mx), int(my)):
+            hit_padding = 8
+            
+            if handles['tl'].adjusted(-hit_padding,-hit_padding,hit_padding,hit_padding).contains(int(mx), int(my)) or \
+               handles['br'].adjusted(-hit_padding,-hit_padding,hit_padding,hit_padding).contains(int(mx), int(my)):
                 self.setCursor(Qt.CursorShape.SizeFDiagCursor)
-            elif handles['tr'].contains(int(mx), int(my)) or handles['bl'].contains(int(mx), int(my)):
+            elif handles['tr'].adjusted(-hit_padding,-hit_padding,hit_padding,hit_padding).contains(int(mx), int(my)) or \
+                 handles['bl'].adjusted(-hit_padding,-hit_padding,hit_padding,hit_padding).contains(int(mx), int(my)):
                 self.setCursor(Qt.CursorShape.SizeBDiagCursor)
+            elif handles['t'].adjusted(-hit_padding,-hit_padding,hit_padding,hit_padding).contains(int(mx), int(my)) or \
+                 handles['b'].adjusted(-hit_padding,-hit_padding,hit_padding,hit_padding).contains(int(mx), int(my)):
+                self.setCursor(Qt.CursorShape.SizeVerCursor)
+            elif handles['l'].adjusted(-hit_padding,-hit_padding,hit_padding,hit_padding).contains(int(mx), int(my)) or \
+                 handles['r'].adjusted(-hit_padding,-hit_padding,hit_padding,hit_padding).contains(int(mx), int(my)):
+                self.setCursor(Qt.CursorShape.SizeHorCursor)
             elif QRect(wx, wy, ww, wh).contains(int(mx), int(my)):
                 self.setCursor(Qt.CursorShape.SizeAllCursor)
             else:
                 self.setCursor(Qt.CursorShape.CrossCursor)
             return
             
-        dx = mx - self.drag_start.x()
-        dy = my - self.drag_start.y()
+        # Delta in image coordinate units
+        dx_img = int((mx - self.drag_start.x()) / scale)
+        dy_img = int((my - self.drag_start.y()) / scale)
+        
+        orig_x = self.drag_rect_start.x()
+        orig_y = self.drag_rect_start.y()
+        orig_w = self.drag_rect_start.width()
+        orig_h = self.drag_rect_start.height()
         
         if self.active_handle == 'move':
-            new_wx = self.drag_rect_start.x() + dx
-            new_wy = self.drag_rect_start.y() + dy
+            new_x = max(0, min(orig_x + dx_img, self.raw_image_width - orig_w))
+            new_y = max(0, min(orig_y + dy_img, self.raw_image_height - orig_h))
+            self.roi_rect["x"] = new_x
+            self.roi_rect["y"] = new_y
             
-            ix = (new_wx - x_off) / scale
-            iy = (new_wy - y_off) / scale
+        elif self.active_handle in ('tl', 'tr', 'bl', 'br', 't', 'b', 'l', 'r'):
+            x1, y1 = orig_x, orig_y
+            x2, y2 = orig_x + orig_w, orig_y + orig_h
             
-            ix = max(0, min(int(ix), self.raw_image_width - self.roi_rect["width"]))
-            iy = max(0, min(int(iy), self.raw_image_height - self.roi_rect["height"]))
-            
-            self.roi_rect["x"] = ix
-            self.roi_rect["y"] = iy
-            
-        elif self.active_handle in ('tl', 'tr', 'bl', 'br'):
-            r = self.drag_rect_start
-            x1, y1, x2, y2 = r.left(), r.top(), r.right(), r.bottom()
-            
-            if self.active_handle == 'tl':
-                x1 += dx; y1 += dy
-            elif self.active_handle == 'tr':
-                x2 += dx; y1 += dy
-            elif self.active_handle == 'bl':
-                x1 += dx; y2 += dy
-            elif self.active_handle == 'br':
-                x2 += dx; y2 += dy
+            if 'l' in self.active_handle:
+                x1 = min(orig_x + dx_img, x2 - 8)
+            if 'r' in self.active_handle:
+                x2 = max(orig_x + orig_w + dx_img, x1 + 8)
+            if 't' in self.active_handle:
+                y1 = min(orig_y + dy_img, y2 - 8)
+            if 'b' in self.active_handle:
+                y2 = max(orig_y + orig_h + dy_img, y1 + 8)
                 
             fx1, fx2 = min(x1, x2), max(x1, x2)
             fy1, fy2 = min(y1, y2), max(y1, y2)
             
-            ix1 = max(0, min(int((fx1 - x_off) / scale), self.raw_image_width - 1))
-            iy1 = max(0, min(int((fy1 - x_off) / scale), self.raw_image_height - 1))
-            ix2 = max(0, min(int((fx2 - x_off) / scale), self.raw_image_width - 1))
-            iy2 = max(0, min(int((fy2 - y_off) / scale), self.raw_image_height - 1))
+            ix1 = max(0, min(fx1, self.raw_image_width - 8))
+            iy1 = max(0, min(fy1, self.raw_image_height - 8))
+            ix2 = max(ix1 + 8, min(fx2, self.raw_image_width))
+            iy2 = max(iy1 + 8, min(fy2, self.raw_image_height))
             
             self.roi_rect["x"] = ix1
             self.roi_rect["y"] = iy1
-            self.roi_rect["width"] = max(8, ix2 - ix1)
-            self.roi_rect["height"] = max(8, iy2 - iy1)
+            self.roi_rect["width"] = ix2 - ix1
+            self.roi_rect["height"] = iy2 - iy1
             
         elif self.active_handle == 'draw':
-            ix_start = (self.drag_start.x() - x_off) / scale
-            iy_start = (self.drag_start.y() - y_off) / scale
-            ix_cur = (mx - x_off) / scale
-            iy_cur = (my - y_off) / scale
+            ix_start = int((self.drag_start.x() - x_off) / scale)
+            iy_start = int((self.drag_start.y() - y_off) / scale)
+            ix_cur = int((mx - x_off) / scale)
+            iy_cur = int((my - y_off) / scale)
             
-            x1, x2 = min(ix_start, ix_cur), max(ix_start, ix_cur)
-            y1, y2 = min(iy_start, iy_cur), max(iy_start, iy_cur)
+            x1 = max(0, min(ix_start, ix_cur, self.raw_image_width - 8))
+            y1 = max(0, min(iy_start, iy_cur, self.raw_image_height - 8))
+            x2 = max(x1 + 8, min(max(ix_start, ix_cur), self.raw_image_width))
+            y2 = max(y1 + 8, min(max(iy_start, iy_cur), self.raw_image_height))
             
-            self.roi_rect["x"] = max(0, min(int(x1), self.raw_image_width - 1))
-            self.roi_rect["y"] = max(0, min(int(y1), self.raw_image_height - 1))
-            self.roi_rect["width"] = max(6, min(int(x2 - x1), self.raw_image_width - self.roi_rect["x"]))
-            self.roi_rect["height"] = max(6, min(int(y2 - y1), self.raw_image_height - self.roi_rect["y"]))
+            self.roi_rect["x"] = x1
+            self.roi_rect["y"] = y1
+            self.roi_rect["width"] = x2 - x1
+            self.roi_rect["height"] = y2 - y1
             
         self.update()
         self.roi_changed.emit()
@@ -933,22 +954,56 @@ class MainWindow(QMainWindow):
         coord_layout.addLayout(h_coord_title)
 
         self.lbl_live_coords = QLabel("X: 0 px  |  Y: 0 px  |  W: 0 px  |  H: 0 px")
-        self.lbl_live_coords.setFont(QFont("Consolas", 10, QFont.Weight.Bold))
+        self.lbl_live_coords.setFont(QFont("Consolas", 9, QFont.Weight.Bold))
         self.lbl_live_coords.setStyleSheet("color: #38bdf8;")
         coord_layout.addWidget(self.lbl_live_coords)
 
+        # Precise SpinBox Inputs for X, Y, W, H
+        grid_spins = QGridLayout()
+        grid_spins.setSpacing(6)
+        
+        grid_spins.addWidget(QLabel("X:"), 0, 0)
+        self.spin_x = QSpinBox()
+        self.spin_x.setRange(0, 7680)
+        self.spin_x.setStyleSheet("background: #0f172a; border: 1px solid rgba(255,255,255,0.15); border-radius: 4px; padding: 2px 4px; font-size: 11px;")
+        self.spin_x.valueChanged.connect(self.on_spin_coords_changed)
+        grid_spins.addWidget(self.spin_x, 0, 1)
+
+        grid_spins.addWidget(QLabel("Y:"), 0, 2)
+        self.spin_y = QSpinBox()
+        self.spin_y.setRange(0, 7680)
+        self.spin_y.setStyleSheet("background: #0f172a; border: 1px solid rgba(255,255,255,0.15); border-radius: 4px; padding: 2px 4px; font-size: 11px;")
+        self.spin_y.valueChanged.connect(self.on_spin_coords_changed)
+        grid_spins.addWidget(self.spin_y, 0, 3)
+
+        grid_spins.addWidget(QLabel("W:"), 1, 0)
+        self.spin_w = QSpinBox()
+        self.spin_w.setRange(8, 7680)
+        self.spin_w.setStyleSheet("background: #0f172a; border: 1px solid rgba(255,255,255,0.15); border-radius: 4px; padding: 2px 4px; font-size: 11px;")
+        self.spin_w.valueChanged.connect(self.on_spin_coords_changed)
+        grid_spins.addWidget(self.spin_w, 1, 1)
+
+        grid_spins.addWidget(QLabel("H:"), 1, 2)
+        self.spin_h = QSpinBox()
+        self.spin_h.setRange(8, 7680)
+        self.spin_h.setStyleSheet("background: #0f172a; border: 1px solid rgba(255,255,255,0.15); border-radius: 4px; padding: 2px 4px; font-size: 11px;")
+        self.spin_h.valueChanged.connect(self.on_spin_coords_changed)
+        grid_spins.addWidget(self.spin_h, 1, 3)
+
+        coord_layout.addLayout(grid_spins)
+
         # Quick Preset Buttons
         h_presets = QHBoxLayout()
-        btn_preset_16_9 = QPushButton("📐 Align 16:9")
+        btn_preset_16_9 = QPushButton("📐 Reset 16:9")
         btn_preset_16_9.setProperty("class", "btn-subtle")
-        btn_preset_16_9.setStyleSheet("font-size: 10px; padding: 3px 6px;")
-        btn_preset_16_9.setToolTip("Set Watermark Box to exact 16:9 default (X:1105, Y:648, W:165, H:57)")
+        btn_preset_16_9.setStyleSheet("font-size: 10px; padding: 4px 6px; font-weight:700;")
+        btn_preset_16_9.setToolTip("Set to 16:9 default (X:1105, Y:648, W:165, H:57)")
         btn_preset_16_9.clicked.connect(lambda: self.canvas.apply_16_9_preset())
 
-        btn_preset_9_16 = QPushButton("📱 Align 9:16")
+        btn_preset_9_16 = QPushButton("📱 Reset 9:16")
         btn_preset_9_16.setProperty("class", "btn-subtle")
-        btn_preset_9_16.setStyleSheet("font-size: 10px; padding: 3px 6px;")
-        btn_preset_9_16.setToolTip("Set Watermark Box to exact 9:16 default (X:584, Y:1200, W:165, H:44)")
+        btn_preset_9_16.setStyleSheet("font-size: 10px; padding: 4px 6px; font-weight:700;")
+        btn_preset_9_16.setToolTip("Set to 9:16 default (X:584, Y:1200, W:165, H:44)")
         btn_preset_9_16.clicked.connect(lambda: self.canvas.apply_9_16_preset())
 
         h_presets.addWidget(btn_preset_16_9)
@@ -1238,6 +1293,22 @@ class MainWindow(QMainWindow):
         r = self.canvas.roi_rect
         self.lbl_live_coords.setText(f"X: {r['x']} px  |  Y: {r['y']} px  |  W: {r['width']} px  |  H: {r['height']} px")
         
+        # Block signals to prevent recursive loops while updating spinboxes
+        self.spin_x.blockSignals(True)
+        self.spin_y.blockSignals(True)
+        self.spin_w.blockSignals(True)
+        self.spin_h.blockSignals(True)
+        
+        self.spin_x.setValue(int(r['x']))
+        self.spin_y.setValue(int(r['y']))
+        self.spin_w.setValue(int(r['width']))
+        self.spin_h.setValue(int(r['height']))
+        
+        self.spin_x.blockSignals(False)
+        self.spin_y.blockSignals(False)
+        self.spin_w.blockSignals(False)
+        self.spin_h.blockSignals(False)
+        
         # Calculate aspect ratio
         if self.preview_video_info:
             vw = self.preview_video_info.get("width", 0)
@@ -1245,6 +1316,24 @@ class MainWindow(QMainWindow):
             if vw > 0 and vh > 0:
                 ratio_name = "9:16 Portrait" if vh > vw else "16:9 Landscape" if vw > vh else "1:1 Square"
                 self.lbl_aspect_ratio.setText(f"{vw}×{vh} ({ratio_name})")
+
+    def on_spin_coords_changed(self):
+        if not self.canvas:
+            return
+        w_max = self.canvas.raw_image_width
+        h_max = self.canvas.raw_image_height
+        
+        x = max(0, min(self.spin_x.value(), w_max - 8))
+        y = max(0, min(self.spin_y.value(), h_max - 8))
+        w = max(8, min(self.spin_w.value(), w_max - x))
+        h = max(8, min(self.spin_h.value(), h_max - y))
+        
+        self.canvas.roi_rect = {
+            "x": x, "y": y, "width": w, "height": h,
+            "ref_width": w_max, "ref_height": h_max
+        }
+        self.lbl_live_coords.setText(f"X: {x} px  |  Y: {y} px  |  W: {w} px  |  H: {h} px")
+        self.canvas.update()
 
     def update_action_states(self):
         is_proc = self.is_processing()
