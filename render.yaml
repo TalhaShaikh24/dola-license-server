@@ -3,9 +3,8 @@ services:
     name: dola-ai-license-server
     runtime: python
     plan: free
-    rootDir: server
     buildCommand: pip install -r requirements_server.txt
-    startCommand: uvicorn server:app --host 0.0.0.0 --port $PORT
+    startCommand: uvicorn server.server:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.8
