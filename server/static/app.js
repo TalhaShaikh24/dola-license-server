@@ -229,14 +229,18 @@ function renderUsers() {
                     <div class="user-email-sub">${escapeHtml(user.email)}</div>
                 </td>
                 <td>${statusBadge}</td>
-                <td><strong>${planName}</strong></td>
+                <td>
+                    <button class="btn btn-outline btn-xs" style="font-weight:700; color: #a5b4fc; border-color: rgba(99,102,241,0.3); background: rgba(99,102,241,0.08);" title="Click to Change Plan" onclick="openApproveModal(${user.id}, '${escapeHtml(user.email)}')">
+                        ${planName} ✏️
+                    </button>
+                </td>
                 <td>${expiryFormatted}</td>
                 <td>${hwidCell}</td>
                 <td style="color: var(--text-muted); font-size: 13px;">${registeredDate}</td>
                 <td class="text-right">
                     <div class="action-group">
-                        <button class="btn btn-emerald btn-xs" onclick="openApproveModal(${user.id}, '${escapeHtml(user.email)}')">
-                            ${user.status === 'active' ? '⚡ Extend / Change' : '✓ Approve'}
+                        <button class="btn btn-emerald btn-xs" style="font-weight:700; padding: 6px 12px;" onclick="openApproveModal(${user.id}, '${escapeHtml(user.email)}')">
+                            ⚡ ${user.status === 'active' ? 'Change Plan' : 'Approve Plan'}
                         </button>
                         ${user.hwid ? `
                             <button class="btn btn-outline btn-xs" title="Unbind PC hardware ID so user can switch device" onclick="resetUserHwid(${user.id}, '${escapeHtml(user.email)}')">
