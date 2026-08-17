@@ -316,16 +316,31 @@ class ROISelectionCanvas(QWidget):
         if self.roi_rect["width"] == 0 or self.roi_rect["height"] == 0 or \
            self.roi_rect["ref_width"] != w or self.roi_rect["ref_height"] != h:
             
-            bw = int(w * 0.18)
-            bh = int(h * 0.06)
-            bx = w - bw - int(w * 0.03)
-            by = h - bh - int(h * 0.03)
+            # Smart Aspect-Ratio Auto-Alignment using exact coordinates:
+            # 16:9 Landscape base: 1280x720 -> X:1105, Y:648, W:165, H:57
+            # 9:16 Portrait base:  720x1280 -> X:584,  Y:1200, W:165, H:44
+            if h > w:
+                # 9:16 Portrait (Reels / TikTok / Shorts)
+                scale_x = w / 720.0
+                scale_y = h / 1280.0
+                bw = max(10, int(165 * scale_x))
+                bh = max(10, int(44 * scale_y))
+                bx = max(0, min(int(584 * scale_x), w - bw))
+                by = max(0, min(int(1200 * scale_y), h - bh))
+            else:
+                # 16:9 Landscape (Standard / YouTube)
+                scale_x = w / 1280.0
+                scale_y = h / 720.0
+                bw = max(10, int(165 * scale_x))
+                bh = max(10, int(57 * scale_y))
+                bx = max(0, min(int(1105 * scale_x), w - bw))
+                by = max(0, min(int(648 * scale_y), h - bh))
             
             self.roi_rect = {
-                "x": max(0, bx),
-                "y": max(0, by),
-                "width": max(10, bw),
-                "height": max(10, bh),
+                "x": bx,
+                "y": by,
+                "width": bw,
+                "height": bh,
                 "ref_width": w,
                 "ref_height": h
             }
@@ -333,6 +348,38 @@ class ROISelectionCanvas(QWidget):
         self.update()
         self.roi_changed.emit()
         
+    def apply_16_9_preset(self):
+        w = self.raw_image_width
+        h = self.raw_image_height
+        scale_x = w / 1280.0
+        scale_y = h / 720.0
+        bw = max(10, int(165 * scale_x))
+        bh = max(10, int(57 * scale_y))
+        bx = max(0, min(int(1105 * scale_x), w - bw))
+        by = max(0, min(int(648 * scale_y), h - bh))
+        self.roi_rect = {
+            "x": bx, "y": by, "width": bw, "height": bh,
+            "ref_width": w, "ref_height": h
+        }
+        self.update()
+        self.roi_changed.emit()
+
+    def apply_9_16_preset(self):
+        w = self.raw_image_width
+        h = self.raw_image_height
+        scale_x = w / 720.0
+        scale_y = h / 1280.0
+        bw = max(10, int(165 * scale_x))
+        bh = max(10, int(44 * scale_y))
+        bx = max(0, min(int(584 * scale_x), w - bw))
+        by = max(0, min(int(1200 * scale_y), h - bh))
+        self.roi_rect = {
+            "x": bx, "y": by, "width": bw, "height": bh,
+            "ref_width": w, "ref_height": h
+        }
+        self.update()
+        self.roi_changed.emit()
+
     def get_scaling_metrics(self):
         if self.pixmap is None or self.pixmap.isNull():
             return 1.0, 0, 0, 0, 0
@@ -889,6 +936,24 @@ class MainWindow(QMainWindow):
         self.lbl_live_coords.setFont(QFont("Consolas", 10, QFont.Weight.Bold))
         self.lbl_live_coords.setStyleSheet("color: #38bdf8;")
         coord_layout.addWidget(self.lbl_live_coords)
+
+        # Quick Preset Buttons
+        h_presets = QHBoxLayout()
+        btn_preset_16_9 = QPushButton("📐 Align 16:9")
+        btn_preset_16_9.setProperty("class", "btn-subtle")
+        btn_preset_16_9.setStyleSheet("font-size: 10px; padding: 3px 6px;")
+        btn_preset_16_9.setToolTip("Set Watermark Box to exact 16:9 default (X:1105, Y:648, W:165, H:57)")
+        btn_preset_16_9.clicked.connect(lambda: self.canvas.apply_16_9_preset())
+
+        btn_preset_9_16 = QPushButton("📱 Align 9:16")
+        btn_preset_9_16.setProperty("class", "btn-subtle")
+        btn_preset_9_16.setStyleSheet("font-size: 10px; padding: 3px 6px;")
+        btn_preset_9_16.setToolTip("Set Watermark Box to exact 9:16 default (X:584, Y:1200, W:165, H:44)")
+        btn_preset_9_16.clicked.connect(lambda: self.canvas.apply_9_16_preset())
+
+        h_presets.addWidget(btn_preset_16_9)
+        h_presets.addWidget(btn_preset_9_16)
+        coord_layout.addLayout(h_presets)
 
         settings_grid.addWidget(self.coord_card, 0, 0, 1, 2)
 
