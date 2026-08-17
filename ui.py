@@ -23,7 +23,7 @@ from licensing.auth_dialog import AuthDialog
 from licensing.svg_icons import get_svg_icon, get_svg_pixmap
 
 # =========================================================================
-#  FLAWLESS ULTRA-PREMIUM THEMES (ZERO WHITE GLITCHES, PIXEL PERFECT)
+#  FLAWLESS ULTRA-PREMIUM OBSIDIAN DARK THEME
 # =========================================================================
 
 DARK_THEME = """
@@ -69,6 +69,11 @@ QFrame#dropCard {
 QFrame#dropCard:hover {
     border-color: #6366f1;
     background-color: rgba(99, 102, 241, 0.05);
+}
+QFrame#coordBox {
+    background-color: rgba(15, 23, 42, 0.9);
+    border: 1px solid rgba(99, 102, 241, 0.25);
+    border-radius: 6px;
 }
 
 /* Mode Tab Buttons */
@@ -274,251 +279,6 @@ QCheckBox::indicator:checked {
 }
 """
 
-LIGHT_THEME = """
-QMainWindow {
-    background-color: #f1f5f9;
-}
-QWidget {
-    background-color: transparent;
-    color: #0f172a;
-    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
-    font-size: 13px;
-}
-QWidget#customTitleBar {
-    background-color: #ffffff;
-    border-bottom: 1px solid #e2e8f0;
-}
-QWidget#mainSidebar {
-    background-color: #ffffff;
-    border-right: 1px solid #e2e8f0;
-}
-QScrollArea {
-    background-color: transparent;
-    border: none;
-}
-QScrollArea > QWidget > QWidget {
-    background-color: transparent;
-}
-QFrame#canvasContainer {
-    background-color: #0f172a;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-}
-QFrame#hudCard {
-    background-color: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-}
-QFrame#dropCard {
-    background-color: #f8fafc;
-    border: 1px dashed #6366f1;
-    border-radius: 8px;
-}
-QFrame#dropCard:hover {
-    border-color: #4f46e5;
-    background-color: #eef2ff;
-}
-
-/* Mode Tab Buttons */
-QPushButton.mode-tab-btn {
-    background-color: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 6px;
-    padding: 8px 10px;
-    font-weight: 600;
-    font-size: 12px;
-    color: #64748b;
-}
-QPushButton.mode-tab-btn:hover {
-    background-color: #f1f5f9;
-    color: #0f172a;
-}
-QPushButton.mode-tab-btn:checked {
-    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #4f46e5, stop:1 #6366f1);
-    border: 1px solid #4f46e5;
-    color: #ffffff;
-    font-weight: 700;
-}
-
-/* Action Buttons */
-QPushButton.btn-primary {
-    background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #6366f1, stop:1 #4f46e5);
-    color: #ffffff;
-    border: none;
-    border-radius: 8px;
-    padding: 10px 16px;
-    font-weight: 700;
-    font-size: 13px;
-}
-QPushButton.btn-primary:hover {
-    background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #4f46e5, stop:1 #4338ca);
-}
-QPushButton.btn-primary:disabled {
-    background: #cbd5e1;
-    color: #94a3b8;
-}
-
-QPushButton.btn-combine {
-    background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #8b5cf6, stop:1 #ec4899);
-    color: #ffffff;
-    border: none;
-    border-radius: 8px;
-    padding: 10px 16px;
-    font-weight: 700;
-    font-size: 13px;
-}
-QPushButton.btn-combine:hover {
-    background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #7c3aed, stop:1 #db2777);
-}
-QPushButton.btn-combine:disabled {
-    background: #cbd5e1;
-    color: #94a3b8;
-}
-
-QPushButton.btn-subtle {
-    background-color: #f8fafc;
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
-    padding: 6px 12px;
-    color: #334155;
-    font-weight: 600;
-}
-QPushButton.btn-subtle:hover {
-    background-color: #f1f5f9;
-    color: #0f172a;
-    border-color: #94a3b8;
-}
-
-QPushButton.btn-danger {
-    background-color: #e11d48;
-    color: #ffffff;
-    border: none;
-    border-radius: 6px;
-    padding: 8px 14px;
-    font-weight: 700;
-}
-QPushButton.btn-danger:hover {
-    background-color: #be123c;
-}
-
-/* Window Buttons */
-QPushButton#titleBarBtnMin, QPushButton#titleBarBtnMax, QPushButton#titleBarBtnClose {
-    background: transparent;
-    border: none;
-    border-radius: 6px;
-    color: #64748b;
-    font-weight: bold;
-    font-size: 13px;
-}
-QPushButton#titleBarBtnMin:hover, QPushButton#titleBarBtnMax:hover {
-    background-color: #f1f5f9;
-    color: #0f172a;
-}
-QPushButton#titleBarBtnClose:hover {
-    background-color: #e11d48;
-    color: #ffffff;
-}
-
-/* Settings Box */
-QGroupBox {
-    font-weight: 700;
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: #4f46e5;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    margin-top: 14px;
-    padding-top: 16px;
-    background-color: #ffffff;
-}
-QGroupBox::title {
-    subcontrol-origin: margin;
-    subcontrol-position: top left;
-    padding: 0 6px;
-    left: 8px;
-    background-color: transparent;
-}
-
-/* Sliders */
-QSlider::groove:horizontal {
-    height: 6px;
-    background: #e2e8f0;
-    border-radius: 3px;
-}
-QSlider::sub-page:horizontal {
-    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #6366f1, stop:1 #818cf8);
-    border-radius: 3px;
-}
-QSlider::handle:horizontal {
-    background: #ffffff;
-    border: 2px solid #6366f1;
-    width: 14px;
-    margin-top: -5px;
-    margin-bottom: -5px;
-    border-radius: 7px;
-}
-
-/* Combos */
-QComboBox {
-    background-color: #ffffff;
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
-    padding: 6px 10px;
-    color: #0f172a;
-}
-QComboBox:hover {
-    border-color: #6366f1;
-}
-QComboBox QAbstractItemView {
-    background-color: #ffffff;
-    border: 1px solid #cbd5e1;
-    selection-background-color: #6366f1;
-    selection-color: #ffffff;
-    color: #0f172a;
-}
-
-/* Progress Bar */
-QProgressBar {
-    background-color: #e2e8f0;
-    border: none;
-    border-radius: 4px;
-    height: 7px;
-}
-QProgressBar::chunk {
-    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #6366f1, stop:1 #a855f7);
-    border-radius: 4px;
-}
-
-/* Console Logs */
-QTextEdit {
-    background-color: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 6px;
-    color: #334155;
-    font-family: 'Consolas', 'Courier New', monospace;
-    font-size: 11px;
-    padding: 6px;
-}
-
-/* Checkbox */
-QCheckBox {
-    font-size: 12px;
-    color: #dc2626;
-    font-weight: 600;
-}
-QCheckBox::indicator {
-    width: 15px;
-    height: 15px;
-    border-radius: 3px;
-    border: 1px solid #dc2626;
-    background: transparent;
-}
-QCheckBox::indicator:checked {
-    background-color: #dc2626;
-}
-"""
-
 class ROISelectionCanvas(QWidget):
     """Interactive canvas widget to render video preview frames and allow drag/resize ROI."""
     roi_changed = pyqtSignal()
@@ -641,6 +401,7 @@ class ROISelectionCanvas(QWidget):
             "ref_width": self.raw_image_width, "ref_height": self.raw_image_height
         }
         self.update()
+        self.roi_changed.emit()
         
     def mouseMoveEvent(self, event):
         if self.pixmap is None:
@@ -730,6 +491,7 @@ class ROISelectionCanvas(QWidget):
         self.active_handle = None
         self.setCursor(Qt.CursorShape.ArrowCursor)
         self.update()
+        self.roi_changed.emit()
         
     def paintEvent(self, event):
         painter = QPainter(self)
@@ -770,11 +532,15 @@ class ROISelectionCanvas(QWidget):
         painter.setPen(pen)
         painter.drawRect(rx, ry, rw, rh)
         
-        dim_str = f"{self.roi_rect['width']} × {self.roi_rect['height']} px"
+        # Enhanced Live Coordinates & Dimension Badge on Canvas
+        dim_str = f"X: {self.roi_rect['x']} | Y: {self.roi_rect['y']} | {self.roi_rect['width']}×{self.roi_rect['height']} px"
         painter.setFont(QFont("Segoe UI", 9, QFont.Weight.Bold))
-        painter.fillRect(QRect(rx, max(0, ry - 20), 105, 18), QColor("#1e1b4b"))
+        badge_w = 210
+        badge_x = max(x_off, min(rx, x_off + w_sc - badge_w))
+        badge_y = max(y_off, ry - 22) if (ry - 22 >= y_off) else ry + rh + 4
+        painter.fillRect(QRect(badge_x, badge_y, badge_w, 20), QColor("#1e1b4b"))
         painter.setPen(QColor("#e0e7ff"))
-        painter.drawText(QRect(rx + 6, max(0, ry - 18), 95, 14), Qt.AlignmentFlag.AlignLeft, dim_str)
+        painter.drawText(QRect(badge_x + 6, badge_y + 2, badge_w - 12, 16), Qt.AlignmentFlag.AlignLeft, dim_str)
         
         handles = self.get_handles_widget_rects(rx, ry, rw, rh)
         painter.setBrush(QBrush(QColor("#ffffff")))
@@ -784,7 +550,7 @@ class ROISelectionCanvas(QWidget):
 
 
 class CustomTitleBar(QWidget):
-    """Ultra-clean header with window controls, creator branding, and light/dark theme switch."""
+    """Header with window controls and creator branding."""
     def __init__(self, parent: QMainWindow):
         super().__init__(parent)
         self.parent_window = parent
@@ -824,14 +590,6 @@ class CustomTitleBar(QWidget):
         layout.addWidget(credit_lbl)
 
         layout.addStretch()
-
-        # Theme Toggle Button
-        self.btn_theme = QPushButton("☀️ Light")
-        self.btn_theme.setProperty("class", "btn-subtle")
-        self.btn_theme.setStyleSheet("font-size: 11px; padding: 4px 10px;")
-        self.btn_theme.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        self.btn_theme.clicked.connect(self.parent_window.toggle_theme)
-        layout.addWidget(self.btn_theme)
 
         # Account / License Pill
         self.btn_license_pill = QPushButton(self.parent_window._get_license_summary_text())
@@ -895,8 +653,8 @@ class CustomTitleBar(QWidget):
 
 class MainWindow(QMainWindow):
     """
-    Main Video Studio Application. Sleek single unified sidebar, pixel-perfect dark & light
-    themes, live video preview with ROI, and high-performance video combiner.
+    Main Video Studio Application. Sleek single unified sidebar, live ROI coordinates display,
+    default dilation=6, default radius=6, and high-performance video combiner.
     """
     def __init__(self):
         super().__init__()
@@ -904,8 +662,6 @@ class MainWindow(QMainWindow):
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Window)
         self.resize(1200, 760)
         self.setAcceptDrops(True)
-        
-        self.current_theme = "dark"
         
         # State variables
         self.selected_single_video = ""
@@ -922,7 +678,7 @@ class MainWindow(QMainWindow):
         self.combine_worker = None
         
         self.init_ui()
-        self.apply_theme("dark")
+        self.setStyleSheet(DARK_THEME)
         
     def init_ui(self):
         central_widget = QWidget()
@@ -1106,12 +862,37 @@ class MainWindow(QMainWindow):
         sc_layout.addWidget(self.stacked_inputs)
 
         # --- Watermark Settings Group (Visible in Single & Batch modes) ---
-        self.grp_settings = QGroupBox("Removal Algorithm Configuration")
+        self.grp_settings = QGroupBox("Removal Configuration & Coordinates")
         settings_grid = QGridLayout(self.grp_settings)
         settings_grid.setSpacing(10)
         settings_grid.setContentsMargins(10, 16, 10, 12)
 
-        settings_grid.addWidget(QLabel("Color Threshold:"), 0, 0)
+        # Live Coordinates Card (Requested by User)
+        self.coord_card = QFrame()
+        self.coord_card.setObjectName("coordBox")
+        coord_layout = QVBoxLayout(self.coord_card)
+        coord_layout.setContentsMargins(10, 8, 10, 8)
+        coord_layout.setSpacing(4)
+
+        h_coord_title = QHBoxLayout()
+        lbl_c_title = QLabel("📍 Watermark Area (X, Y, Size):")
+        lbl_c_title.setFont(QFont("Segoe UI", 9, QFont.Weight.Bold))
+        lbl_c_title.setStyleSheet("color: #818cf8;")
+        self.lbl_aspect_ratio = QLabel("Ratio: -")
+        self.lbl_aspect_ratio.setStyleSheet("color: #94a3b8; font-size: 10px; font-weight: 600;")
+        h_coord_title.addWidget(lbl_c_title)
+        h_coord_title.addStretch()
+        h_coord_title.addWidget(self.lbl_aspect_ratio)
+        coord_layout.addLayout(h_coord_title)
+
+        self.lbl_live_coords = QLabel("X: 0 px  |  Y: 0 px  |  W: 0 px  |  H: 0 px")
+        self.lbl_live_coords.setFont(QFont("Consolas", 10, QFont.Weight.Bold))
+        self.lbl_live_coords.setStyleSheet("color: #38bdf8;")
+        coord_layout.addWidget(self.lbl_live_coords)
+
+        settings_grid.addWidget(self.coord_card, 0, 0, 1, 2)
+
+        settings_grid.addWidget(QLabel("Color Threshold:"), 1, 0)
         self.slider_thresh = QSlider(Qt.Orientation.Horizontal)
         self.slider_thresh.setRange(100, 255)
         self.slider_thresh.setValue(200)
@@ -1122,56 +903,58 @@ class MainWindow(QMainWindow):
         h_thresh = QHBoxLayout()
         h_thresh.addWidget(self.slider_thresh)
         h_thresh.addWidget(self.lbl_thresh_val)
-        settings_grid.addLayout(h_thresh, 0, 1)
+        settings_grid.addLayout(h_thresh, 1, 1)
 
-        settings_grid.addWidget(QLabel("Dilation Size:"), 1, 0)
+        # Dilation Size (Default set to 6 as requested)
+        settings_grid.addWidget(QLabel("Dilation Size:"), 2, 0)
         self.slider_dilation = QSlider(Qt.Orientation.Horizontal)
-        self.slider_dilation.setRange(0, 10)
-        self.slider_dilation.setValue(2)
+        self.slider_dilation.setRange(0, 15)
+        self.slider_dilation.setValue(6)
         self.slider_dilation.valueChanged.connect(self.on_slider_dilation_changed)
-        self.lbl_dilation_val = QLabel("2")
+        self.lbl_dilation_val = QLabel("6")
         self.lbl_dilation_val.setFixedWidth(28)
         self.lbl_dilation_val.setAlignment(Qt.AlignmentFlag.AlignRight)
         h_dil = QHBoxLayout()
         h_dil.addWidget(self.slider_dilation)
         h_dil.addWidget(self.lbl_dilation_val)
-        settings_grid.addLayout(h_dil, 1, 1)
+        settings_grid.addLayout(h_dil, 2, 1)
 
-        settings_grid.addWidget(QLabel("Inpaint Radius:"), 2, 0)
+        # Inpaint Radius (Default set to 6 as requested)
+        settings_grid.addWidget(QLabel("Inpaint Radius:"), 3, 0)
         self.slider_radius = QSlider(Qt.Orientation.Horizontal)
-        self.slider_radius.setRange(1, 15)
-        self.slider_radius.setValue(3)
+        self.slider_radius.setRange(1, 20)
+        self.slider_radius.setValue(6)
         self.slider_radius.valueChanged.connect(self.on_slider_radius_changed)
-        self.lbl_radius_val = QLabel("3")
+        self.lbl_radius_val = QLabel("6")
         self.lbl_radius_val.setFixedWidth(28)
         self.lbl_radius_val.setAlignment(Qt.AlignmentFlag.AlignRight)
         h_rad = QHBoxLayout()
         h_rad.addWidget(self.slider_radius)
         h_rad.addWidget(self.lbl_radius_val)
-        settings_grid.addLayout(h_rad, 2, 1)
+        settings_grid.addLayout(h_rad, 3, 1)
 
-        settings_grid.addWidget(QLabel("Masking Mode:"), 3, 0)
+        settings_grid.addWidget(QLabel("Masking Mode:"), 4, 0)
         self.combo_mask_mode = QComboBox()
         self.combo_mask_mode.addItems(["Static Text", "Dynamic Text", "Full Box"])
         self.combo_mask_mode.currentIndexChanged.connect(self.on_mask_mode_changed)
-        settings_grid.addWidget(self.combo_mask_mode, 3, 1)
+        settings_grid.addWidget(self.combo_mask_mode, 4, 1)
 
-        settings_grid.addWidget(QLabel("Algorithm:"), 4, 0)
+        settings_grid.addWidget(QLabel("Algorithm:"), 5, 0)
         self.combo_method = QComboBox()
         self.combo_method.addItems(["Telea", "Navier-Stokes"])
-        settings_grid.addWidget(self.combo_method, 4, 1)
+        settings_grid.addWidget(self.combo_method, 5, 1)
 
-        settings_grid.addWidget(QLabel("CPU Threads:"), 5, 0)
+        settings_grid.addWidget(QLabel("CPU Threads:"), 6, 0)
         self.combo_threads = QComboBox()
         cores = os.cpu_count() or 4
         for i in range(1, cores + 1):
             self.combo_threads.addItem(str(i))
         self.combo_threads.setCurrentText(str(max(1, cores // 2)))
-        settings_grid.addWidget(self.combo_threads, 5, 1)
+        settings_grid.addWidget(self.combo_threads, 6, 1)
 
         self.chk_overwrite = QCheckBox("Overwrite Original File(s)")
         self.chk_overwrite.toggled.connect(self.on_overwrite_toggled)
-        settings_grid.addWidget(self.chk_overwrite, 6, 0, 1, 2)
+        settings_grid.addWidget(self.chk_overwrite, 7, 0, 1, 2)
         sc_layout.addWidget(self.grp_settings)
 
         # --- Video Combine Settings Group (Visible in Combine mode) ---
@@ -1360,20 +1143,6 @@ class MainWindow(QMainWindow):
 
         self.update_action_states()
 
-    # --- Theme Switching (Dark / Light) ---
-    def toggle_theme(self):
-        new_theme = "light" if self.current_theme == "dark" else "dark"
-        self.apply_theme(new_theme)
-
-    def apply_theme(self, theme_name: str):
-        self.current_theme = theme_name
-        if theme_name == "light":
-            self.setStyleSheet(LIGHT_THEME)
-            self.title_bar.btn_theme.setText("🌙 Dark")
-        else:
-            self.setStyleSheet(DARK_THEME)
-            self.title_bar.btn_theme.setText("☀️ Light")
-
     # --- Sliders & Settings Handlers ---
     def on_slider_thresh_changed(self, val):
         self.lbl_thresh_val.setText(str(val))
@@ -1401,7 +1170,16 @@ class MainWindow(QMainWindow):
             self.btn_browse_batch_out.setEnabled(not checked)
 
     def on_roi_changed(self):
-        pass
+        r = self.canvas.roi_rect
+        self.lbl_live_coords.setText(f"X: {r['x']} px  |  Y: {r['y']} px  |  W: {r['width']} px  |  H: {r['height']} px")
+        
+        # Calculate aspect ratio
+        if self.preview_video_info:
+            vw = self.preview_video_info.get("width", 0)
+            vh = self.preview_video_info.get("height", 0)
+            if vw > 0 and vh > 0:
+                ratio_name = "9:16 Portrait" if vh > vw else "16:9 Landscape" if vw > vh else "1:1 Square"
+                self.lbl_aspect_ratio.setText(f"{vw}×{vh} ({ratio_name})")
 
     def update_action_states(self):
         is_proc = self.is_processing()
@@ -1459,6 +1237,8 @@ class MainWindow(QMainWindow):
         self.canvas.pixmap = None
         self.canvas.image = None
         self.canvas.update()
+        self.lbl_live_coords.setText("X: 0 px  |  Y: 0 px  |  W: 0 px  |  H: 0 px")
+        self.lbl_aspect_ratio.setText("Ratio: -")
         
     def load_video_preview(self, path):
         try:
@@ -1468,8 +1248,14 @@ class MainWindow(QMainWindow):
             self.preview_frame_bgr = cv2.cvtColor(frame_rgb, cv2.COLOR_RGB2BGR)
             self.preview_video_info = info
             self.canvas.set_frame(frame_rgb)
-            self.log(f"Preview frame loaded: {info['width']}x{info['height']} @ {info['fps']:.2f}fps")
+            
+            vw, vh = info.get('width', 0), info.get('height', 0)
+            ratio_name = "9:16 Portrait" if vh > vw else "16:9 Landscape" if vw > vh else "1:1 Square"
+            self.lbl_aspect_ratio.setText(f"{vw}×{vh} ({ratio_name})")
+            
+            self.log(f"Preview frame loaded: {info['width']}x{info['height']} ({ratio_name}) @ {info['fps']:.2f}fps")
             self.lbl_hud_status.setText(f"Loaded: {os.path.basename(path)}")
+            self.on_roi_changed()
             self.update_action_states()
         except Exception as e:
             self.log(f"Error loading preview: {str(e)}")
