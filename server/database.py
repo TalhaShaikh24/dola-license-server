@@ -4,13 +4,27 @@ import datetime
 import bcrypt
 from typing import Optional, List, Dict, Any
 
-DEFAULT_DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "saas_licenses.db")
+DEFAULT_DB_PATH = os.getenv("DATABASE_PATH")
+if not DEFAULT_DB_PATH:
+    if os.getenv("VERCEL") or os.getenv("AWS_LAMBDA_FUNCTION_NAME"):
+        DEFAULT_DB_PATH = "/tmp/saas_licenses.db"
+    else:
+        DEFAULT_DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "saas_licenses.db")
+
+_db_initialized = False
 
 def get_connection(db_path: Optional[str] = None) -> sqlite3.Connection:
+    global _db_initialized
     target_path = db_path or DEFAULT_DB_PATH
     os.makedirs(os.path.dirname(os.path.abspath(target_path)), exist_ok=True)
     conn = sqlite3.connect(target_path)
     conn.row_factory = sqlite3.Row
+    if not _db_initialized and target_path == DEFAULT_DB_PATH:
+        _db_initialized = True
+        try:
+            init_db(target_path)
+        except Exception:
+            pass
     return conn
 
 def hash_password(plain_password: str) -> str:
