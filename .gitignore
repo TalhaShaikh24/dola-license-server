@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+build/
+dist/
+*.mp4
+*.mkv
+*.avi
+*.db
+crash_log.txt
+.license_session.json

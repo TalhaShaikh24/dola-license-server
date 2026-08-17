@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dola AI SaaS - Super Admin Licensing Portal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <!-- Background glowing accents -->
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
+
+    <!-- Login Screen -->
+    <div id="loginSection" class="auth-wrapper">
+        <div class="auth-card">
+            <div class="brand-header">
+                <div class="brand-icon">✨</div>
+                <h2>Dola AI SaaS Portal</h2>
+                <p class="subtitle">Super Admin License Management</p>
+            </div>
+            <form id="adminLoginForm">
+                <div class="form-group">
+                    <label for="adminUsername">Admin Username</label>
+                    <input type="text" id="adminUsername" placeholder="admin" required autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label for="adminPassword">Admin Password</label>
+                    <input type="password" id="adminPassword" placeholder="••••••••" required autocomplete="current-password">
+                </div>
+                <button type="submit" id="loginBtn" class="btn btn-primary btn-block">
+                    <span>Sign In to Dashboard</span>
+                </button>
+                <div id="loginError" class="alert alert-error hidden"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Dashboard Section -->
+    <div id="dashboardSection" class="dashboard-wrapper hidden">
+        <!-- Navigation Header -->
+        <header class="top-nav">
+            <div class="nav-brand">
+                <span class="logo-badge">DOLA AI</span>
+                <span class="nav-title">SaaS Super Admin</span>
+            </div>
+            <div class="nav-actions">
+                <div class="admin-pill">
+                    <span class="status-dot-green"></span>
+                    <span id="displayAdminUser">admin</span>
+                </div>
+                <button id="logoutBtn" class="btn btn-outline btn-sm">Log Out</button>
+            </div>
+        </header>
+
+        <!-- Dashboard Content -->
+        <main class="main-content">
+            <!-- Metric Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon icon-users">👥</div>
+                    <div class="stat-info">
+                        <div class="stat-label">Total Users</div>
+                        <div class="stat-value" id="statTotal">0</div>
+                    </div>
+                </div>
+                <div class="stat-card highlight-amber">
+                    <div class="stat-icon icon-pending">⏳</div>
+                    <div class="stat-info">
+                        <div class="stat-label">Pending Approval</div>
+                        <div class="stat-value text-amber" id="statPending">0</div>
+                    </div>
+                </div>
+                <div class="stat-card highlight-emerald">
+                    <div class="stat-icon icon-active">⚡</div>
+                    <div class="stat-info">
+                        <div class="stat-label">Active Licenses</div>
+                        <div class="stat-value text-emerald" id="statActive">0</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon icon-expired">🛑</div>
+                    <div class="stat-info">
+                        <div class="stat-label">Expired / Suspended</div>
+                        <div class="stat-value" id="statExpired">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Controls & Filter Toolbar -->
+            <div class="toolbar-card">
+                <div class="filter-pills">
+                    <button class="filter-btn active" data-status="all">All (<span id="countAll">0</span>)</button>
+                    <button class="filter-btn filter-pending" data-status="pending">Pending Approval (<span id="countPending">0</span>)</button>
+                    <button class="filter-btn" data-status="active">Active</button>
+                    <button class="filter-btn" data-status="expired">Expired</button>
+                    <button class="filter-btn" data-status="suspended">Suspended</button>
+                </div>
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="Search by email, name, HWID...">
+                    <button id="refreshBtn" class="btn btn-icon" title="Refresh">🔄</button>
+                </div>
+            </div>
+
+            <!-- Users Table Card -->
+            <div class="table-card">
+                <div class="table-container">
+                    <table class="user-table">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Status</th>
+                                <th>Plan / Duration</th>
+                                <th>Expiry Date</th>
+                                <th>Device Binding (HWID)</th>
+                                <th>Registered</th>
+                                <th class="text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="userTableBody">
+                            <tr>
+                                <td colspan="7" class="empty-state">Loading users...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Approve / Set Duration Modal -->
+    <div id="approveModal" class="modal-backdrop hidden">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>Approve & Set License Duration</h3>
+                <button class="close-btn" onclick="closeApproveModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-subtitle">Granting access for <strong id="modalUserEmail" class="text-emerald">user@example.com</strong></p>
+                
+                <div class="plan-options-grid">
+                    <label class="plan-option">
+                        <input type="radio" name="planDuration" value="7_days">
+                        <div class="option-content">
+                            <span class="option-title">7 Days Trial</span>
+                            <span class="option-desc">Quick trial evaluation</span>
+                        </div>
+                    </label>
+
+                    <label class="plan-option active-plan">
+                        <input type="radio" name="planDuration" value="1_month" checked>
+                        <div class="option-content">
+                            <span class="option-title">1 Month (30 Days)</span>
+                            <span class="option-desc">Standard Monthly Access</span>
+                        </div>
+                    </label>
+
+                    <label class="plan-option">
+                        <input type="radio" name="planDuration" value="1_year">
+                        <div class="option-content">
+                            <span class="option-title">1 Year (365 Days)</span>
+                            <span class="option-desc">Annual Subscription</span>
+                        </div>
+                    </label>
+
+                    <label class="plan-option highlight-gold">
+                        <input type="radio" name="planDuration" value="lifetime">
+                        <div class="option-content">
+                            <span class="option-title">👑 Lifetime Access</span>
+                            <span class="option-desc">Permanent, never expires</span>
+                        </div>
+                    </label>
+
+                    <label class="plan-option">
+                        <input type="radio" name="planDuration" value="custom">
+                        <div class="option-content">
+                            <span class="option-title">Custom Date</span>
+                            <span class="option-desc">Pick exact expiration</span>
+                        </div>
+                    </label>
+                </div>
+
+                <div id="customDateGroup" class="form-group hidden" style="margin-top: 14px;">
+                    <label for="customExpiryDate">Custom Expiry Date & Time (UTC)</label>
+                    <input type="datetime-local" id="customExpiryDate">
+                </div>
+
+                <div class="form-group" style="margin-top: 14px;">
+                    <label for="adminNote">Admin Note / Order ID (Optional)</label>
+                    <input type="text" id="adminNote" placeholder="e.g. Paid via Stripe invoice #1024">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeApproveModal()">Cancel</button>
+                <button id="confirmApproveBtn" class="btn btn-emerald">
+                    <span>Confirm & Activate License</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,214 @@
+import sqlite3
+import os
+import datetime
+import bcrypt
+from typing import Optional, List, Dict, Any
+
+DEFAULT_DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "saas_licenses.db")
+
+def get_connection(db_path: Optional[str] = None) -> sqlite3.Connection:
+    target_path = db_path or DEFAULT_DB_PATH
+    os.makedirs(os.path.dirname(os.path.abspath(target_path)), exist_ok=True)
+    conn = sqlite3.connect(target_path)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+def hash_password(plain_password: str) -> str:
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(plain_password.encode('utf-8'), salt)
+    return hashed.decode('utf-8')
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    try:
+        return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
+    except Exception:
+        return False
+
+def init_db(db_path: Optional[str] = None):
+    """Initialize database tables and create default super admin if not exists."""
+    target_path = db_path or DEFAULT_DB_PATH
+    os.makedirs(os.path.dirname(os.path.abspath(target_path)), exist_ok=True)
+    with get_connection(target_path) as conn:
+        cursor = conn.cursor()
+        
+        # Users table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                email TEXT UNIQUE NOT NULL,
+                password_hash TEXT NOT NULL,
+                full_name TEXT NOT NULL,
+                status TEXT NOT NULL DEFAULT 'pending',
+                plan_type TEXT DEFAULT 'none',
+                expires_at TEXT,
+                hwid TEXT,
+                hwid_registered_at TEXT,
+                created_at TEXT NOT NULL,
+                approved_at TEXT,
+                last_login_at TEXT,
+                notes TEXT
+            )
+        """)
+        
+        # Admin table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS admins (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT UNIQUE NOT NULL,
+                password_hash TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            )
+        """)
+        
+        # Check if default admin exists
+        cursor.execute("SELECT id FROM admins WHERE username = 'admin'")
+        if not cursor.fetchone():
+            default_hash = hash_password("admin123")
+            now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
+            cursor.execute(
+                "INSERT INTO admins (username, password_hash, created_at) VALUES (?, ?, ?)",
+                ("admin", default_hash, now_iso)
+            )
+        conn.commit()
+
+def calculate_expiry(plan_type: str, custom_date: Optional[str] = None) -> Optional[str]:
+    """Calculate expiration ISO timestamp based on plan duration."""
+    now = datetime.datetime.now(datetime.timezone.utc)
+    if plan_type == "7_days":
+        expiry = now + datetime.timedelta(days=7)
+        return expiry.isoformat()
+    elif plan_type == "1_month":
+        expiry = now + datetime.timedelta(days=30)
+        return expiry.isoformat()
+    elif plan_type == "1_year":
+        expiry = now + datetime.timedelta(days=365)
+        return expiry.isoformat()
+    elif plan_type == "lifetime":
+        return None
+    elif plan_type == "custom" and custom_date:
+        return custom_date
+    return None
+
+def create_user(email: str, password_raw: str, full_name: str, hwid: Optional[str] = None, db_path: Optional[str] = None) -> Dict[str, Any]:
+    now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    pwd_hash = hash_password(password_raw)
+    with get_connection(db_path) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            INSERT INTO users (email, password_hash, full_name, status, created_at, hwid)
+            VALUES (?, ?, ?, 'pending', ?, ?)
+            """,
+            (email.strip().lower(), pwd_hash, full_name.strip(), now_iso, hwid)
+        )
+        user_id = cursor.lastrowid
+        conn.commit()
+    return get_user_by_id(user_id, db_path)
+
+def get_user_by_email(email: str, db_path: Optional[str] = None) -> Optional[Dict[str, Any]]:
+    with get_connection(db_path) as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM users WHERE email = ?", (email.strip().lower(),))
+        row = cursor.fetchone()
+        return dict(row) if row else None
+
+def get_user_by_id(user_id: int, db_path: Optional[str] = None) -> Optional[Dict[str, Any]]:
+    with get_connection(db_path) as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM users WHERE id = ?", (user_id,))
+        row = cursor.fetchone()
+        return dict(row) if row else None
+
+def list_users(search: Optional[str] = None, status_filter: Optional[str] = None, db_path: Optional[str] = None) -> List[Dict[str, Any]]:
+    with get_connection(db_path) as conn:
+        cursor = conn.cursor()
+        query = "SELECT * FROM users WHERE 1=1"
+        params = []
+        
+        if status_filter and status_filter != "all":
+            query += " AND status = ?"
+            params.append(status_filter)
+            
+        if search:
+            query += " AND (email LIKE ? OR full_name LIKE ? OR hwid LIKE ?)"
+            term = f"%{search}%"
+            params.extend([term, term, term])
+            
+        query += " ORDER BY id DESC"
+        cursor.execute(query, params)
+        rows = cursor.fetchall()
+        return [dict(r) for r in rows]
+
+def approve_user(user_id: int, plan_type: str, custom_date: Optional[str] = None, notes: Optional[str] = None, db_path: Optional[str] = None) -> Optional[Dict[str, Any]]:
+    now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    expiry_iso = calculate_expiry(plan_type, custom_date)
+    
+    with get_connection(db_path) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            UPDATE users 
+            SET status = 'active', plan_type = ?, expires_at = ?, approved_at = ?, notes = COALESCE(?, notes)
+            WHERE id = ?
+            """,
+            (plan_type, expiry_iso, now_iso, notes, user_id)
+        )
+        conn.commit()
+    return get_user_by_id(user_id, db_path)
+
+def reset_hwid(user_id: int, db_path: Optional[str] = None) -> Optional[Dict[str, Any]]:
+    with get_connection(db_path) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "UPDATE users SET hwid = NULL, hwid_registered_at = NULL WHERE id = ?",
+            (user_id,)
+        )
+        conn.commit()
+    return get_user_by_id(user_id, db_path)
+
+def set_user_status(user_id: int, status: str, db_path: Optional[str] = None) -> Optional[Dict[str, Any]]:
+    with get_connection(db_path) as conn:
+        cursor = conn.cursor()
+        cursor.execute("UPDATE users SET status = ? WHERE id = ?", (status, user_id))
+        conn.commit()
+    return get_user_by_id(user_id, db_path)
+
+def delete_user(user_id: int, db_path: Optional[str] = None) -> bool:
+    with get_connection(db_path) as conn:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM users WHERE id = ?", (user_id,))
+        conn.commit()
+        return cursor.rowcount > 0
+
+def update_login_and_hwid(user_id: int, hwid: str, db_path: Optional[str] = None):
+    now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    with get_connection(db_path) as conn:
+        cursor = conn.cursor()
+        # If user has no HWID bound yet, bind it now
+        cursor.execute(
+            """
+            UPDATE users
+            SET last_login_at = ?,
+                hwid = CASE WHEN hwid IS NULL OR hwid = '' THEN ? ELSE hwid END,
+                hwid_registered_at = CASE WHEN hwid IS NULL OR hwid = '' THEN ? ELSE hwid_registered_at END
+            WHERE id = ?
+            """,
+            (now_iso, hwid, now_iso, user_id)
+        )
+        conn.commit()
+
+def verify_admin(username: str, password_raw: str, db_path: Optional[str] = None) -> bool:
+    with get_connection(db_path) as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT password_hash FROM admins WHERE username = ?", (username.strip(),))
+        row = cursor.fetchone()
+        if row and verify_password(password_raw, row["password_hash"]):
+            return True
+    return False
+
+def update_admin_password(username: str, new_password_raw: str, db_path: Optional[str] = None):
+    new_hash = hash_password(new_password_raw)
+    with get_connection(db_path) as conn:
+        cursor = conn.cursor()
+        cursor.execute("UPDATE admins SET password_hash = ? WHERE username = ?", (new_hash, username.strip()))
+        conn.commit()
