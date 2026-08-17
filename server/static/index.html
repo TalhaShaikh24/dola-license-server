@@ -9,6 +9,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Modern Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
@@ -20,9 +22,9 @@
     <div id="loginSection" class="auth-wrapper">
         <div class="auth-card">
             <div class="brand-header">
-                <div class="brand-icon">✨</div>
+                <div class="brand-icon"><i data-lucide="sparkles" style="width:28px; height:28px; color:#818cf8;"></i></div>
                 <h2>Dola AI SaaS Portal</h2>
-                <p class="subtitle">Developed by <a href="https://talhashaikh.com" target="_blank" style="color:#6366f1; text-decoration:none; font-weight:600;">Talha Shaikh</a> (talhashaikh.com)</p>
+                <p class="subtitle">Developed by <a href="https://talhashaikh.com" target="_blank" style="color:#818cf8; text-decoration:none; font-weight:600;">Talha Shaikh</a> (talhashaikh.com)</p>
             </div>
             <form id="adminLoginForm">
                 <div class="form-group">
@@ -34,6 +36,7 @@
                     <input type="password" id="adminPassword" placeholder="••••••••" required autocomplete="current-password">
                 </div>
                 <button type="submit" id="loginBtn" class="btn btn-primary btn-block">
+                    <i data-lucide="lock" style="width:16px; height:16px;"></i>
                     <span>Sign In to Dashboard</span>
                 </button>
                 <div id="loginError" class="alert alert-error hidden"></div>
@@ -53,9 +56,13 @@
             <div class="nav-actions">
                 <div class="admin-pill">
                     <span class="status-dot-green"></span>
+                    <i data-lucide="shield-check" style="width:15px; height:15px; color:#10b981; margin-right:4px;"></i>
                     <span id="displayAdminUser">admin</span>
                 </div>
-                <button id="logoutBtn" class="btn btn-outline btn-sm">Log Out</button>
+                <button id="logoutBtn" class="btn btn-outline btn-sm">
+                    <i data-lucide="log-out" style="width:14px; height:14px;"></i>
+                    <span>Log Out</span>
+                </button>
             </div>
         </header>
 
@@ -63,18 +70,22 @@
         <main class="main-content">
             <!-- Section Switcher Tabs -->
             <div style="display: flex; gap: 12px; margin-bottom: 20px;">
-                <button id="tabBtnUsers" class="filter-btn active" style="font-size: 14px; padding: 10px 18px;" onclick="switchDashboardTab('users')">
-                    👥 User Licenses (<span id="countTabUsers">0</span>)
+                <button id="tabBtnUsers" class="filter-btn active" style="font-size: 14px; padding: 10px 18px; display: inline-flex; align-items: center; gap: 6px;" onclick="switchDashboardTab('users')">
+                    <i data-lucide="users" style="width:16px; height:16px;"></i>
+                    <span>User Licenses (<span id="countTabUsers">0</span>)</span>
                 </button>
-                <button id="tabBtnAnalytics" class="filter-btn" style="font-size: 14px; padding: 10px 18px;" onclick="switchDashboardTab('analytics')">
-                    📊 Video Analytics & Activity
+                <button id="tabBtnAnalytics" class="filter-btn" style="font-size: 14px; padding: 10px 18px; display: inline-flex; align-items: center; gap: 6px;" onclick="switchDashboardTab('analytics')">
+                    <i data-lucide="bar-chart-3" style="width:16px; height:16px;"></i>
+                    <span>Video Analytics & Activity</span>
                 </button>
             </div>
 
             <!-- Video Processing Metric Stats Grid -->
             <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); margin-bottom: 24px;">
                 <div class="stat-card highlight-purple">
-                    <div class="stat-icon" style="background: rgba(99, 102, 241, 0.15); color: #818cf8;">🎬</div>
+                    <div class="stat-icon" style="background: rgba(99, 102, 241, 0.15); color: #818cf8;">
+                        <i data-lucide="wand-2" style="width:24px; height:24px;"></i>
+                    </div>
                     <div class="stat-info">
                         <div class="stat-label">Watermarks Removed</div>
                         <div class="stat-value text-purple" id="statWatermarks">0</div>
@@ -83,7 +94,9 @@
                 </div>
 
                 <div class="stat-card highlight-blue">
-                    <div class="stat-icon" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa;">🎞️</div>
+                    <div class="stat-icon" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa;">
+                        <i data-lucide="film" style="width:24px; height:24px;"></i>
+                    </div>
                     <div class="stat-info">
                         <div class="stat-label">Videos Combined</div>
                         <div class="stat-value" style="color: #60a5fa;" id="statCombines">0</div>
@@ -92,7 +105,9 @@
                 </div>
 
                 <div class="stat-card highlight-emerald">
-                    <div class="stat-icon icon-active">⚡</div>
+                    <div class="stat-icon icon-active">
+                        <i data-lucide="zap" style="width:24px; height:24px;"></i>
+                    </div>
                     <div class="stat-info">
                         <div class="stat-label">Active Licenses</div>
                         <div class="stat-value text-emerald" id="statActive">0</div>
@@ -101,11 +116,13 @@
                 </div>
 
                 <div class="stat-card highlight-amber">
-                    <div class="stat-icon icon-pending">⏳</div>
+                    <div class="stat-icon icon-pending">
+                        <i data-lucide="clock" style="width:24px; height:24px;"></i>
+                    </div>
                     <div class="stat-info">
                         <div class="stat-label">Pending Approval</div>
                         <div class="stat-value text-amber" id="statPending">0</div>
-                        <div style="font-size: 11px; color: #9ca3af; margin-top: 2px;"><span id="statTotalUsers">0</span> total users</div>
+                        <div style="font-size: 11px; color: #9ca3af; margin-top: 2px;"><span id="statTotalUsers">0</span> total registered</div>
                     </div>
                 </div>
             </div>
@@ -122,8 +139,11 @@
                         <button class="filter-btn" data-status="suspended">Suspended</button>
                     </div>
                     <div class="search-box">
+                        <i data-lucide="search" style="width:16px; height:16px; color:#6b7280; margin-left:8px;"></i>
                         <input type="text" id="searchInput" placeholder="Search by email, name, HWID...">
-                        <button id="refreshBtn" class="btn btn-icon" title="Refresh">🔄</button>
+                        <button id="refreshBtn" class="btn btn-icon" title="Refresh">
+                            <i data-lucide="rotate-cw" style="width:16px; height:16px;"></i>
+                        </button>
                     </div>
                 </div>
 
@@ -159,7 +179,8 @@
                     <!-- Power Users Leaderboard -->
                     <div class="table-card" style="padding: 20px;">
                         <h3 style="margin-top: 0; font-size: 16px; color: #ffffff; display: flex; align-items: center; gap: 8px;">
-                            <span>🏆</span> Most Active Users (Leaderboard)
+                            <i data-lucide="trophy" style="width:18px; height:18px; color:#fbbf24;"></i>
+                            <span>Most Active Users (Leaderboard)</span>
                         </h3>
                         <div class="table-container">
                             <table class="user-table" style="font-size: 12px;">
@@ -167,8 +188,8 @@
                                     <tr>
                                         <th>User</th>
                                         <th>Plan</th>
-                                        <th>🎬 Watermarks</th>
-                                        <th>🎞️ Combined</th>
+                                        <th>Watermarks</th>
+                                        <th>Combined</th>
                                         <th>Total Ops</th>
                                     </tr>
                                 </thead>
@@ -181,99 +202,70 @@
 
                     <!-- Live Activity Feed -->
                     <div class="table-card" style="padding: 20px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                            <h3 style="margin: 0; font-size: 16px; color: #ffffff; display: flex; align-items: center; gap: 8px;">
-                                <span>🔴</span> Real-time Activity Feed
-                            </h3>
-                            <button class="btn btn-outline btn-sm" onclick="loadAnalyticsData()">Refresh Feed</button>
-                        </div>
-                        <div id="activityFeedList" style="max-height: 400px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-right: 4px;">
-                            <div class="empty-state">No recent activity.</div>
+                        <h3 style="margin-top: 0; font-size: 16px; color: #ffffff; display: flex; align-items: center; gap: 8px;">
+                            <i data-lucide="activity" style="width:18px; height:18px; color:#38bdf8;"></i>
+                            <span>Live Video Activity Feed</span>
+                        </h3>
+                        <div id="activityFeedList" style="display: flex; flex-direction: column; gap: 10px; max-height: 420px; overflow-y: auto; padding-right: 6px;">
+                            <div style="color: #9ca3af; font-size: 13px; text-align: center; padding: 30px;">Waiting for user operations...</div>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <!-- Footer Branding -->
-            <footer style="margin-top: 36px; padding: 20px; text-align: center; font-size: 13px; color: var(--text-muted); border-top: 1px solid var(--border-color);">
-                Developed with ❤️ by <a href="https://talhashaikh.com" target="_blank" style="color: #6366f1; text-decoration: none; font-weight: 700;">Talha Shaikh</a> &bull; <a href="https://talhashaikh.com" target="_blank" style="color: #a5b4fc; text-decoration: none;">talhashaikh.com</a>
-            </footer>
         </main>
     </div>
 
-    <!-- Approve / Set Duration Modal -->
-    <div id="approveModal" class="modal-backdrop hidden">
+    <!-- Modal: Approve / Edit License -->
+    <div id="approveModal" class="modal-overlay hidden">
         <div class="modal-card">
             <div class="modal-header">
-                <h3>Approve & Set License Duration</h3>
-                <button class="close-btn" onclick="closeApproveModal()">✕</button>
+                <h3>Grant License & Access</h3>
+                <button class="modal-close" onclick="closeApproveModal()">&times;</button>
             </div>
             <div class="modal-body">
-                <p class="modal-subtitle">Granting access for <strong id="modalUserEmail" class="text-emerald">user@example.com</strong></p>
+                <div class="user-modal-info">
+                    <p><strong>User:</strong> <span id="modalUserEmail">user@example.com</span></p>
+                    <p><strong>Full Name:</strong> <span id="modalUserName">John Doe</span></p>
+                    <p><strong>Hardware ID:</strong> <code id="modalUserHwid" class="hwid-badge">None</code></p>
+                </div>
                 
-                <div class="plan-options-grid">
-                    <label class="plan-option">
-                        <input type="radio" name="planDuration" value="7_days">
-                        <div class="option-content">
-                            <span class="option-title">7 Days Trial</span>
-                            <span class="option-desc">Quick trial evaluation</span>
-                        </div>
-                    </label>
+                <form id="approveForm">
+                    <input type="hidden" id="modalUserId">
+                    <div class="form-group">
+                        <label for="planSelect">Select License Plan</label>
+                        <select id="planSelect" required onchange="handlePlanChange()">
+                            <option value="7_days">7 Days Trial / Pass</option>
+                            <option value="1_month">1 Month Standard</option>
+                            <option value="1_year">1 Year Pro</option>
+                            <option value="lifetime" selected>👑 Lifetime Unlimited</option>
+                            <option value="custom">Custom Expiry Date</option>
+                        </select>
+                    </div>
 
-                    <label class="plan-option active-plan">
-                        <input type="radio" name="planDuration" value="1_month" checked>
-                        <div class="option-content">
-                            <span class="option-title">1 Month (30 Days)</span>
-                            <span class="option-desc">Standard Monthly Access</span>
-                        </div>
-                    </label>
+                    <div id="customDateGroup" class="form-group hidden">
+                        <label for="customExpiryDate">Custom Expiration Date & Time</label>
+                        <input type="datetime-local" id="customExpiryDate">
+                    </div>
 
-                    <label class="plan-option">
-                        <input type="radio" name="planDuration" value="1_year">
-                        <div class="option-content">
-                            <span class="option-title">1 Year (365 Days)</span>
-                            <span class="option-desc">Annual Subscription</span>
-                        </div>
-                    </label>
+                    <div class="form-group">
+                        <label for="adminNotes">Admin Notes (Optional)</label>
+                        <input type="text" id="adminNotes" placeholder="e.g. Payment verified via Easypaisa / Stripe">
+                    </div>
 
-                    <label class="plan-option highlight-gold">
-                        <input type="radio" name="planDuration" value="lifetime">
-                        <div class="option-content">
-                            <span class="option-title">👑 Lifetime Access</span>
-                            <span class="option-desc">Permanent, never expires</span>
-                        </div>
-                    </label>
-
-                    <label class="plan-option">
-                        <input type="radio" name="planDuration" value="custom">
-                        <div class="option-content">
-                            <span class="option-title">Custom Date</span>
-                            <span class="option-desc">Pick exact expiration</span>
-                        </div>
-                    </label>
-                </div>
-
-                <div id="customDateGroup" class="form-group hidden" style="margin-top: 14px;">
-                    <label for="customExpiryDate">Custom Expiry Date & Time (UTC)</label>
-                    <input type="datetime-local" id="customExpiryDate">
-                </div>
-
-                <div class="form-group" style="margin-top: 14px;">
-                    <label for="adminNote">Admin Note / Order ID (Optional)</label>
-                    <input type="text" id="adminNote" placeholder="e.g. Paid via Stripe invoice #1024">
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-outline" onclick="closeApproveModal()">Cancel</button>
-                <button id="confirmApproveBtn" class="btn btn-emerald">
-                    <span>Confirm & Activate License</span>
-                </button>
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-outline" onclick="closeApproveModal()">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="savePlanBtn">
+                            <i data-lucide="check-circle" style="width:16px; height:16px;"></i>
+                            <span>Activate License</span>
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 
-    <!-- Toast Notification Container -->
-    <div id="toastContainer" class="toast-container"></div>
+    <!-- Notification Toast -->
+    <div id="toastNotification" class="toast hidden"></div>
 
     <script src="/static/app.js"></script>
 </body>

@@ -6,10 +6,11 @@ from PyQt6.QtWidgets import (
     QTabWidget, QWidget, QFrame, QMessageBox, QApplication, QSpacerItem,
     QSizePolicy, QGraphicsDropShadowEffect, QStackedWidget
 )
-from PyQt6.QtCore import Qt, pyqtSignal, QThread, pyqtSlot, QPoint
+from PyQt6.QtCore import Qt, pyqtSignal, QThread, pyqtSlot, QPoint, QSize
 from PyQt6.QtGui import QFont, QColor, QIcon, QCursor, QClipboard, QPixmap
 
 from licensing.license_client import license_client
+from licensing.svg_icons import get_svg_icon, get_svg_pixmap
 
 AUTH_DIALOG_STYLE = """
 QDialog {
@@ -31,8 +32,6 @@ QPushButton#dialogCloseBtn {
     background: transparent;
     border: none;
     color: #9ca3af;
-    font-size: 14px;
-    font-weight: bold;
     border-radius: 6px;
     padding: 0;
 }
@@ -93,15 +92,12 @@ QPushButton.eye-btn {
     background-color: rgba(15, 23, 42, 0.85);
     border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 8px;
-    color: #9ca3af;
-    font-size: 14px;
     padding: 6px 12px;
 }
 
 QPushButton.eye-btn:hover {
     background-color: rgba(99, 102, 241, 0.15);
     border-color: #6366f1;
-    color: #ffffff;
 }
 
 QPushButton.primary-btn {
@@ -228,7 +224,7 @@ class DialogTitleBar(QWidget):
             pix.setDevicePixelRatio(2.0)
             icon_lbl.setPixmap(pix)
         else:
-            icon_lbl.setText("✨")
+            icon_lbl.setPixmap(get_svg_pixmap("sparkles", "#818cf8", 16))
         layout.addWidget(icon_lbl)
 
         title_lbl = QLabel(title)
@@ -237,7 +233,8 @@ class DialogTitleBar(QWidget):
 
         layout.addStretch()
 
-        close_btn = QPushButton("✕")
+        close_btn = QPushButton()
+        close_btn.setIcon(get_svg_icon("close", "#94a3b8", 14))
         close_btn.setFixedSize(28, 26)
         close_btn.setObjectName("dialogCloseBtn")
         close_btn.setToolTip("Close")
@@ -278,12 +275,12 @@ class AuthWorker(QThread):
             self.finished.emit(success, msg, data)
 
 class VerifyEmailDialog(QDialog):
-    """Modal dialog to enter 6-digit email OTP verification code with custom header."""
+    """Modal dialog to enter 6-digit email OTP verification code with modern vector icons."""
     def __init__(self, email: str, parent=None):
         super().__init__(parent)
         self.email = email
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Dialog)
-        self.setFixedSize(430, 390)
+        self.setFixedSize(430, 400)
         self.setStyleSheet(AUTH_DIALOG_STYLE)
         self._init_ui()
 
@@ -300,8 +297,8 @@ class VerifyEmailDialog(QDialog):
         layout.setContentsMargins(24, 18, 24, 24)
         layout.setSpacing(14)
 
-        icon_lbl = QLabel("✉️")
-        icon_lbl.setFont(QFont("Segoe UI", 26))
+        icon_lbl = QLabel()
+        icon_lbl.setPixmap(get_svg_pixmap("mail", "#6366f1", 44))
         icon_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(icon_lbl)
 
@@ -310,7 +307,7 @@ class VerifyEmailDialog(QDialog):
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(title)
 
-        desc = QLabel(f"We sent a 6-digit verification code to:<br><b style='color:#6366f1;'>{self.email}</b>")
+        desc = QLabel(f"We sent a 6-digit verification code to:<br><b style='color:#818cf8;'>{self.email}</b>")
         desc.setAlignment(Qt.AlignmentFlag.AlignCenter)
         desc.setWordWrap(True)
         layout.addWidget(desc)
@@ -329,6 +326,7 @@ class VerifyEmailDialog(QDialog):
         layout.addWidget(self.otp_input)
 
         self.verify_btn = QPushButton("Verify Code")
+        self.verify_btn.setIcon(get_svg_icon("check-circle", "#ffffff", 16))
         self.verify_btn.setProperty("class", "primary-btn")
         self.verify_btn.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         self.verify_btn.clicked.connect(self._verify)
@@ -336,6 +334,7 @@ class VerifyEmailDialog(QDialog):
 
         h_resend = QHBoxLayout()
         resend_btn = QPushButton("Resend Code")
+        resend_btn.setIcon(get_svg_icon("refresh", "#818cf8", 13))
         resend_btn.setProperty("class", "link-btn")
         resend_btn.clicked.connect(self._resend)
         h_resend.addStretch()
@@ -374,11 +373,11 @@ class VerifyEmailDialog(QDialog):
         self.banner.show()
 
 class ForgotPasswordDialog(QDialog):
-    """Dialog for requesting and submitting password reset with custom header and eye toggle."""
+    """Dialog for requesting and submitting password reset with modern vector icons."""
     def __init__(self, parent=None, initial_email=""):
         super().__init__(parent)
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Dialog)
-        self.setFixedSize(450, 470)
+        self.setFixedSize(450, 480)
         self.setStyleSheet(AUTH_DIALOG_STYLE)
         self.step = 1
         self.email = initial_email
@@ -397,9 +396,15 @@ class ForgotPasswordDialog(QDialog):
         self.layout.setContentsMargins(24, 20, 24, 24)
         self.layout.setSpacing(12)
 
+        header_h = QHBoxLayout()
+        key_icon = QLabel()
+        key_icon.setPixmap(get_svg_pixmap("key", "#6366f1", 24))
         self.title_lbl = QLabel("Forgot Password")
         self.title_lbl.setFont(QFont("Segoe UI", 16, QFont.Weight.Bold))
-        self.layout.addWidget(self.title_lbl)
+        header_h.addWidget(key_icon)
+        header_h.addWidget(self.title_lbl)
+        header_h.addStretch()
+        self.layout.addLayout(header_h)
 
         self.desc_lbl = QLabel("Enter your email address to receive a 6-digit password reset code.")
         self.desc_lbl.setWordWrap(True)
@@ -435,9 +440,10 @@ class ForgotPasswordDialog(QDialog):
         self.pwd_input.setPlaceholderText("••••••••")
         self.pwd_input.hide()
         
-        self.pwd_eye_btn = QPushButton("👁️")
+        self.pwd_eye_btn = QPushButton()
+        self.pwd_eye_btn.setIcon(get_svg_icon("eye", "#94a3b8", 16))
         self.pwd_eye_btn.setProperty("class", "eye-btn")
-        self.pwd_eye_btn.setToolTip("Show / Hide Password")
+        self.pwd_eye_btn.setToolTip("Toggle Password Visibility")
         self.pwd_eye_btn.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         self.pwd_eye_btn.clicked.connect(self._toggle_forgot_pwd_visibility)
         self.pwd_eye_btn.hide()
@@ -453,6 +459,7 @@ class ForgotPasswordDialog(QDialog):
         self.layout.addStretch()
 
         self.action_btn = QPushButton("Send Reset Code")
+        self.action_btn.setIcon(get_svg_icon("mail", "#ffffff", 16))
         self.action_btn.setProperty("class", "primary-btn")
         self.action_btn.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         self.action_btn.clicked.connect(self._on_action_clicked)
@@ -463,10 +470,10 @@ class ForgotPasswordDialog(QDialog):
     def _toggle_forgot_pwd_visibility(self):
         if self.pwd_input.echoMode() == QLineEdit.EchoMode.Password:
             self.pwd_input.setEchoMode(QLineEdit.EchoMode.Normal)
-            self.pwd_eye_btn.setText("👁️‍🗨️")
+            self.pwd_eye_btn.setIcon(get_svg_icon("eye-off", "#818cf8", 16))
         else:
             self.pwd_input.setEchoMode(QLineEdit.EchoMode.Password)
-            self.pwd_eye_btn.setText("👁️")
+            self.pwd_eye_btn.setIcon(get_svg_icon("eye", "#94a3b8", 16))
 
     def _on_action_clicked(self):
         if self.step == 1:
@@ -489,6 +496,7 @@ class ForgotPasswordDialog(QDialog):
             self.pwd_input.show()
             self.pwd_eye_btn.show()
             self.action_btn.setText("Set New Password")
+            self.action_btn.setIcon(get_svg_icon("lock", "#ffffff", 16))
             self._show_banner(f"✓ {msg}", "success")
         else:
             otp = self.otp_input.text().strip()
@@ -555,8 +563,7 @@ class AuthDialog(QDialog):
             pix.setDevicePixelRatio(2.0)
             brand_icon.setPixmap(pix)
         else:
-            brand_icon.setText("✨")
-            brand_icon.setFont(QFont("Segoe UI", 24))
+            brand_icon.setPixmap(get_svg_pixmap("sparkles", "#818cf8", 36))
         
         brand_info = QVBoxLayout()
         brand_info.setSpacing(2)
@@ -591,6 +598,7 @@ class AuthDialog(QDialog):
         hwid_lbl.setStyleSheet("color: #6b7280;")
         
         copy_hwid_btn = QPushButton("Copy HWID")
+        copy_hwid_btn.setIcon(get_svg_icon("copy", "#9ca3af", 13))
         copy_hwid_btn.setProperty("class", "outline-btn")
         copy_hwid_btn.setStyleSheet("font-size: 11px; padding: 4px 10px;")
         copy_hwid_btn.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
@@ -648,9 +656,10 @@ class AuthDialog(QDialog):
         self.login_pwd.setPlaceholderText("••••••••")
         self.login_pwd.returnPressed.connect(self._on_login_clicked)
         
-        self.login_eye_btn = QPushButton("👁️")
+        self.login_eye_btn = QPushButton()
+        self.login_eye_btn.setIcon(get_svg_icon("eye", "#94a3b8", 16))
         self.login_eye_btn.setProperty("class", "eye-btn")
-        self.login_eye_btn.setToolTip("Show / Hide Password")
+        self.login_eye_btn.setToolTip("Toggle Password Visibility")
         self.login_eye_btn.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         self.login_eye_btn.clicked.connect(self._toggle_login_pwd_visibility)
         
@@ -669,7 +678,7 @@ class AuthDialog(QDialog):
         layout.addLayout(h_forgot)
 
         # Single Device info text
-        device_note = QLabel("🔒 Single-device license: This login will bind your account to this PC.")
+        device_note = QLabel("Single-device license: This login will bind your account to this PC.")
         device_note.setFont(QFont("Segoe UI", 8))
         device_note.setStyleSheet("color: #9ca3af; font-style: italic;")
         device_note.setWordWrap(True)
@@ -677,8 +686,9 @@ class AuthDialog(QDialog):
 
         layout.addStretch()
 
-        # Submit Button - use && to avoid mnemonic underline
+        # Submit Button
         self.login_btn = QPushButton("Sign In && Activate")
+        self.login_btn.setIcon(get_svg_icon("lock", "#ffffff", 16))
         self.login_btn.setProperty("class", "primary-btn")
         self.login_btn.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         self.login_btn.clicked.connect(self._on_login_clicked)
@@ -689,10 +699,10 @@ class AuthDialog(QDialog):
     def _toggle_login_pwd_visibility(self):
         if self.login_pwd.echoMode() == QLineEdit.EchoMode.Password:
             self.login_pwd.setEchoMode(QLineEdit.EchoMode.Normal)
-            self.login_eye_btn.setText("👁️‍🗨️")
+            self.login_eye_btn.setIcon(get_svg_icon("eye-off", "#818cf8", 16))
         else:
             self.login_pwd.setEchoMode(QLineEdit.EchoMode.Password)
-            self.login_eye_btn.setText("👁️")
+            self.login_eye_btn.setIcon(get_svg_icon("eye", "#94a3b8", 16))
 
     def _create_register_tab(self) -> QWidget:
         widget = QWidget()
@@ -730,9 +740,10 @@ class AuthDialog(QDialog):
         self.reg_pwd.setEchoMode(QLineEdit.EchoMode.Password)
         self.reg_pwd.setPlaceholderText("••••••••")
         
-        self.reg_eye_btn = QPushButton("👁️")
+        self.reg_eye_btn = QPushButton()
+        self.reg_eye_btn.setIcon(get_svg_icon("eye", "#94a3b8", 16))
         self.reg_eye_btn.setProperty("class", "eye-btn")
-        self.reg_eye_btn.setToolTip("Show / Hide Password")
+        self.reg_eye_btn.setToolTip("Toggle Password Visibility")
         self.reg_eye_btn.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         self.reg_eye_btn.clicked.connect(self._toggle_reg_pwd_visibility)
         
@@ -741,7 +752,7 @@ class AuthDialog(QDialog):
         layout.addLayout(h_reg_pwd)
 
         # Notice
-        approval_note = QLabel("✉️ A 6-digit verification code will be sent to your email to verify your address.")
+        approval_note = QLabel("A 6-digit verification code will be sent to your email to verify your address.")
         approval_note.setFont(QFont("Segoe UI", 8))
         approval_note.setStyleSheet("color: #60a5fa;")
         approval_note.setWordWrap(True)
@@ -751,6 +762,7 @@ class AuthDialog(QDialog):
 
         # Register Button
         self.reg_btn = QPushButton("Submit Registration")
+        self.reg_btn.setIcon(get_svg_icon("sparkles", "#ffffff", 16))
         self.reg_btn.setProperty("class", "primary-btn")
         self.reg_btn.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         self.reg_btn.clicked.connect(self._on_register_clicked)
@@ -761,10 +773,10 @@ class AuthDialog(QDialog):
     def _toggle_reg_pwd_visibility(self):
         if self.reg_pwd.echoMode() == QLineEdit.EchoMode.Password:
             self.reg_pwd.setEchoMode(QLineEdit.EchoMode.Normal)
-            self.reg_eye_btn.setText("👁️‍🗨️")
+            self.reg_eye_btn.setIcon(get_svg_icon("eye-off", "#818cf8", 16))
         else:
             self.reg_pwd.setEchoMode(QLineEdit.EchoMode.Password)
-            self.reg_eye_btn.setText("👁️")
+            self.reg_eye_btn.setIcon(get_svg_icon("eye", "#94a3b8", 16))
 
     def _create_settings_tab(self) -> QWidget:
         widget = QWidget()
@@ -805,6 +817,7 @@ class AuthDialog(QDialog):
 
             layout.addSpacing(8)
             logout_btn = QPushButton("Log Out & Clear Session")
+            logout_btn.setIcon(get_svg_icon("log-out", "#fb7185", 14))
             logout_btn.setProperty("class", "outline-btn")
             logout_btn.setStyleSheet("color: #fb7185; border-color: rgba(244,63,94,0.3); font-weight: 600;")
             logout_btn.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
@@ -822,7 +835,7 @@ class AuthDialog(QDialog):
             layout.addWidget(no_acc_card)
 
         # Support note
-        support_note = QLabel("💬 For subscription renewals, plan upgrades, or support, visit <a href='https://talhashaikh.com' style='color:#6366f1; text-decoration:none; font-weight:bold;'>talhashaikh.com</a>.")
+        support_note = QLabel("For subscription renewals, plan upgrades, or support, visit <a href='https://talhashaikh.com' style='color:#6366f1; text-decoration:none; font-weight:bold;'>talhashaikh.com</a>.")
         support_note.setTextFormat(Qt.TextFormat.RichText)
         support_note.setOpenExternalLinks(True)
         support_note.setFont(QFont("Segoe UI", 9))
@@ -839,16 +852,14 @@ class AuthDialog(QDialog):
         dlg.exec()
 
     def _show_login_banner(self, message: str, banner_type: str = "error"):
-        icon = "✕" if banner_type == "error" else "⏳" if banner_type == "warning" else "✓"
-        self.login_banner.setText(f"{icon} {message}")
+        self.login_banner.setText(message)
         self.login_banner.setProperty("class", f"banner-{banner_type}")
         self.login_banner.style().unpolish(self.login_banner)
         self.login_banner.style().polish(self.login_banner)
         self.login_banner.show()
 
     def _show_register_banner(self, message: str, banner_type: str = "error"):
-        icon = "✕" if banner_type == "error" else "⏳" if banner_type == "warning" else "✓"
-        self.register_banner.setText(f"{icon} {message}")
+        self.register_banner.setText(message)
         self.register_banner.setProperty("class", f"banner-{banner_type}")
         self.register_banner.style().unpolish(self.register_banner)
         self.register_banner.style().polish(self.register_banner)

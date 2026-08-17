@@ -1,4 +1,4 @@
-// Super Admin SaaS Dashboard Frontend Controller - with Video Processing Analytics
+// Super Admin SaaS Dashboard Frontend Controller - with Video Processing Analytics & Modern Lucide Icons
 let currentAdminToken = localStorage.getItem("dola_admin_token") || null;
 let currentUsers = [];
 let currentAnalytics = null;
@@ -17,10 +17,13 @@ const refreshBtn = document.getElementById("refreshBtn");
 const logoutBtn = document.getElementById("logoutBtn");
 const approveModal = document.getElementById("approveModal");
 const modalUserEmail = document.getElementById("modalUserEmail");
-const confirmApproveBtn = document.getElementById("confirmApproveBtn");
+const modalUserName = document.getElementById("modalUserName");
+const modalUserHwid = document.getElementById("modalUserHwid");
 const customDateGroup = document.getElementById("customDateGroup");
 const customExpiryDate = document.getElementById("customExpiryDate");
-const adminNote = document.getElementById("adminNote");
+const adminNotes = document.getElementById("adminNotes");
+const approveForm = document.getElementById("approveForm");
+const planSelect = document.getElementById("planSelect");
 
 // Initial Startup
 document.addEventListener("DOMContentLoaded", () => {
@@ -30,7 +33,14 @@ document.addEventListener("DOMContentLoaded", () => {
         showLogin();
     }
     setupEventListeners();
+    refreshIcons();
 });
+
+function refreshIcons() {
+    if (window.lucide) {
+        window.lucide.createIcons();
+    }
+}
 
 function setupEventListeners() {
     // Admin Login Form
@@ -89,49 +99,46 @@ function setupEventListeners() {
         });
     });
 
-    // Radio button changes for custom date toggle
-    document.querySelectorAll("input[name='planDuration']").forEach(radio => {
-        radio.addEventListener("change", (e) => {
-            if (e.target.value === "custom") {
-                customDateGroup.classList.remove("hidden");
-            } else {
-                customDateGroup.classList.add("hidden");
-            }
-        });
-    });
-
-    // Confirm Approval in Modal
-    confirmApproveBtn.addEventListener("click", async () => {
+    // Approve / License Update Form Submission
+    approveForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
         if (!targetUserIdToApprove) return;
-        
-        const selectedPlan = document.querySelector("input[name='planDuration']:checked").value;
-        let customDateVal = null;
-        if (selectedPlan === "custom") {
-            const rawVal = customExpiryDate.value;
-            if (!rawVal) {
-                alert("Please select a valid custom expiration date.");
-                return;
-            }
-            customDateVal = new Date(rawVal).toISOString();
+
+        const selectedPlan = planSelect.value;
+        const customDate = selectedPlan === "custom" ? customExpiryDate.value : null;
+        const notes = adminNotes.value.trim();
+
+        if (selectedPlan === "custom" && !customDate) {
+            alert("Please select a custom expiration date.");
+            return;
         }
 
+        const savePlanBtn = document.getElementById("savePlanBtn");
+        savePlanBtn.disabled = true;
+
         try {
-            confirmApproveBtn.disabled = true;
             await apiRequest(`/api/admin/users/${targetUserIdToApprove}/approve`, "POST", {
                 plan_type: selectedPlan,
-                custom_date: customDateVal,
-                notes: adminNote.value.trim() || null
+                custom_date: customDate,
+                notes: notes
             });
-            
-            showToast(`User approved with ${formatPlanName(selectedPlan)}!`, "success");
             closeApproveModal();
+            showToast("License plan updated successfully!", "success");
             loadDashboardData();
         } catch (err) {
             alert("Error approving user: " + err.message);
         } finally {
-            confirmApproveBtn.disabled = false;
+            savePlanBtn.disabled = false;
         }
     });
+}
+
+function handlePlanChange() {
+    if (planSelect.value === "custom") {
+        customDateGroup.classList.remove("hidden");
+    } else {
+        customDateGroup.classList.add("hidden");
+    }
 }
 
 function switchDashboardTab(tab) {
@@ -153,17 +160,20 @@ function switchDashboardTab(tab) {
         tabBtnAnalytics.classList.add("active");
         loadAnalyticsData();
     }
+    refreshIcons();
 }
 
 function showLogin() {
     loginSection.classList.remove("hidden");
     dashboardSection.classList.add("hidden");
+    refreshIcons();
 }
 
 function showDashboard() {
     loginSection.classList.add("hidden");
     dashboardSection.classList.remove("hidden");
     loadDashboardData();
+    refreshIcons();
 }
 
 async function apiRequest(endpoint, method = "GET", body = null) {
@@ -242,17 +252,29 @@ function renderAnalyticsViews(data) {
         lbBody.innerHTML = `<tr><td colspan="5" class="empty-state" style="text-align:center; padding: 24px; color: var(--text-muted);">No video operations recorded yet.</td></tr>`;
     } else {
         lbBody.innerHTML = topUsers.map((u, idx) => {
-            const medal = idx === 0 ? "🥇 " : idx === 1 ? "🥈 " : idx === 2 ? "🥉 " : `#${idx+1} `;
+            const rankBadge = idx === 0 
+                ? `<span style="color:#fbbf24; font-weight:800; margin-right:4px;">#1</span>`
+                : idx === 1 
+                ? `<span style="color:#94a3b8; font-weight:800; margin-right:4px;">#2</span>`
+                : idx === 2
+                ? `<span style="color:#b45309; font-weight:800; margin-right:4px;">#3</span>`
+                : `<span style="color:var(--text-muted); font-size:11px; margin-right:4px;">#${idx+1}</span>`;
+
             return `
                 <tr>
                     <td>
-                        <strong>${medal}${escapeHtml(u.full_name || 'Anonymous')}</strong>
-                        <div style="font-size: 11px; color: var(--text-muted);">${escapeHtml(u.email)}</div>
+                        <div style="display:flex; align-items:center;">
+                            ${rankBadge}
+                            <div>
+                                <strong>${escapeHtml(u.full_name || 'Anonymous')}</strong>
+                                <div style="font-size: 11px; color: var(--text-muted);">${escapeHtml(u.email)}</div>
+                            </div>
+                        </div>
                     </td>
                     <td><span class="badge" style="font-size:11px;">${formatPlanName(u.plan_type)}</span></td>
-                    <td><strong style="color: #a5b4fc;">🎬 ${u.watermark_count || 0}</strong></td>
-                    <td><strong style="color: #60a5fa;">🎞️ ${u.combine_count || 0}</strong></td>
-                    <td><strong style="color: #10b981;">⚡ ${u.total_ops_count || 0}</strong></td>
+                    <td><strong style="color: #a5b4fc;">${u.watermark_count || 0}</strong></td>
+                    <td><strong style="color: #60a5fa;">${u.combine_count || 0}</strong></td>
+                    <td><strong style="color: #10b981;">${u.total_ops_count || 0}</strong></td>
                 </tr>
             `;
         }).join("");
@@ -266,15 +288,17 @@ function renderAnalyticsViews(data) {
     } else {
         feedList.innerHTML = activities.map(act => {
             const isWm = act.op_type.includes("watermark");
-            const icon = isWm ? "🎬" : "🎞️";
-            const badgeClass = isWm ? "badge-purple" : "badge-blue";
+            const iconName = isWm ? "wand-2" : "film";
+            const iconColor = isWm ? "#818cf8" : "#60a5fa";
             const typeLabel = isWm ? "Watermark Removal" : "Video Combine";
             const timeAgo = formatTimeAgo(act.created_at);
 
             return `
                 <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 8px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between;">
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <span style="font-size: 18px;">${icon}</span>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="background: rgba(255,255,255,0.05); padding: 8px; border-radius: 6px; display: flex; align-items: center; justify-content: center;">
+                            <i data-lucide="${iconName}" style="width:18px; height:18px; color:${iconColor};"></i>
+                        </div>
                         <div>
                             <div style="font-size: 13px; font-weight: 600; color: #ffffff;">
                                 ${escapeHtml(act.email)}
@@ -293,17 +317,16 @@ function renderAnalyticsViews(data) {
             `;
         }).join("");
     }
+    refreshIcons();
 }
 
 function renderUsers() {
     const searchTerm = searchInput.value.toLowerCase().trim();
     
     const filtered = currentUsers.filter(user => {
-        // Status Filter
         if (activeFilter !== "all" && user.status !== activeFilter) {
             return false;
         }
-        // Search Filter
         if (searchTerm) {
             const matchesEmail = user.email && user.email.toLowerCase().includes(searchTerm);
             const matchesName = user.full_name && user.full_name.toLowerCase().includes(searchTerm);
@@ -321,6 +344,7 @@ function renderUsers() {
                 </td>
             </tr>
         `;
+        refreshIcons();
         return;
     }
 
@@ -331,15 +355,19 @@ function renderUsers() {
         const hwidCell = formatHwid(user.hwid);
         const registeredDate = user.created_at ? new Date(user.created_at).toLocaleDateString() : "-";
         const emailVerifiedBadge = user.is_email_verified === 1 
-            ? `<span style="font-size:10px; color:#10b981; margin-left:4px;" title="Email Verified">✓ Verified</span>`
-            : `<span style="font-size:10px; color:#fbbf24; margin-left:4px;" title="Email Unverified">✉️ Unverified</span>`;
+            ? `<span style="font-size:10px; color:#10b981; margin-left:4px; display:inline-flex; align-items:center; gap:2px;" title="Email Verified"><i data-lucide="check-circle" style="width:12px; height:12px;"></i> Verified</span>`
+            : `<span style="font-size:10px; color:#fbbf24; margin-left:4px; display:inline-flex; align-items:center; gap:2px;" title="Email Unverified"><i data-lucide="mail" style="width:12px; height:12px;"></i> Unverified</span>`;
 
         const wmCount = user.watermark_count || 0;
         const combCount = user.combine_count || 0;
         const usageCell = `
-            <div style="font-size: 12px; line-height: 1.4;">
-                <span style="color: #a5b4fc; font-weight: 600;" title="Watermarks Removed">🎬 ${wmCount}</span> &bull; 
-                <span style="color: #60a5fa; font-weight: 600;" title="Videos Combined">🎞️ ${combCount}</span>
+            <div style="font-size: 12px; line-height: 1.4; display:flex; align-items:center; gap:8px;">
+                <span style="color: #a5b4fc; font-weight: 600; display:inline-flex; align-items:center; gap:3px;" title="Watermarks Removed">
+                    <i data-lucide="wand-2" style="width:12px; height:12px;"></i> ${wmCount}
+                </span>
+                <span style="color: #60a5fa; font-weight: 600; display:inline-flex; align-items:center; gap:3px;" title="Videos Combined">
+                    <i data-lucide="film" style="width:12px; height:12px;"></i> ${combCount}
+                </span>
             </div>
         `;
 
@@ -351,8 +379,9 @@ function renderUsers() {
                 </td>
                 <td>${statusBadge}</td>
                 <td>
-                    <button class="btn btn-outline btn-xs" style="font-weight:700; color: #a5b4fc; border-color: rgba(99,102,241,0.3); background: rgba(99,102,241,0.08);" title="Click to Change Plan" onclick="openApproveModal(${user.id}, '${escapeHtml(user.email)}')">
-                        ${planName} ✏️
+                    <button class="btn btn-outline btn-xs" style="font-weight:700; color: #a5b4fc; border-color: rgba(99,102,241,0.3); background: rgba(99,102,241,0.08); display:inline-flex; align-items:center; gap:4px;" title="Click to Change Plan" onclick="openApproveModal(${user.id}, '${escapeHtml(user.email)}', '${escapeHtml(user.full_name || '')}', '${escapeHtml(user.hwid || '')}', '${user.plan_type}')">
+                        <span>${planName}</span>
+                        <i data-lucide="edit-3" style="width:11px; height:11px;"></i>
                     </button>
                 </td>
                 <td>${usageCell}</td>
@@ -360,44 +389,49 @@ function renderUsers() {
                 <td>${hwidCell}</td>
                 <td style="color: var(--text-muted); font-size: 13px;">${registeredDate}</td>
                 <td class="text-right">
-                    <div class="action-group">
-                        <button class="btn btn-emerald btn-xs" style="font-weight:700; padding: 6px 12px;" onclick="openApproveModal(${user.id}, '${escapeHtml(user.email)}')">
-                            ⚡ ${user.status === 'active' ? 'Change Plan' : 'Approve Plan'}
+                    <div class="action-group" style="justify-content: flex-end;">
+                        <button class="btn btn-emerald btn-xs" style="font-weight:700; padding: 6px 12px; display:inline-flex; align-items:center; gap:4px;" onclick="openApproveModal(${user.id}, '${escapeHtml(user.email)}', '${escapeHtml(user.full_name || '')}', '${escapeHtml(user.hwid || '')}', '${user.plan_type}')">
+                            <i data-lucide="zap" style="width:12px; height:12px;"></i>
+                            <span>${user.status === 'active' ? 'Change Plan' : 'Approve'}</span>
                         </button>
                         ${user.hwid ? `
-                            <button class="btn btn-outline btn-xs" title="Unbind PC hardware ID so user can switch device" onclick="resetUserHwid(${user.id}, '${escapeHtml(user.email)}')">
-                                🔓 Reset HWID
+                            <button class="btn btn-outline btn-xs" title="Unbind PC hardware ID so user can switch device" style="display:inline-flex; align-items:center; gap:4px;" onclick="resetUserHwid(${user.id}, '${escapeHtml(user.email)}')">
+                                <i data-lucide="unlock" style="width:12px; height:12px;"></i>
+                                <span>Reset HWID</span>
                             </button>
                         ` : ''}
                         ${user.status === 'active' ? `
-                            <button class="btn btn-outline btn-xs text-rose" onclick="setUserStatus(${user.id}, 'suspended')">
-                                Suspend
+                            <button class="btn btn-outline btn-xs text-rose" style="display:inline-flex; align-items:center; gap:4px;" onclick="setUserStatus(${user.id}, 'suspended')">
+                                <i data-lucide="pause-circle" style="width:12px; height:12px;"></i>
+                                <span>Suspend</span>
                             </button>
                         ` : user.status === 'suspended' ? `
-                            <button class="btn btn-outline btn-xs text-emerald" onclick="setUserStatus(${user.id}, 'active')">
-                                Reactivate
+                            <button class="btn btn-outline btn-xs text-emerald" style="display:inline-flex; align-items:center; gap:4px;" onclick="setUserStatus(${user.id}, 'active')">
+                                <i data-lucide="play-circle" style="width:12px; height:12px;"></i>
+                                <span>Reactivate</span>
                             </button>
                         ` : ''}
                         <button class="btn btn-outline btn-xs" title="Delete User" style="color: #ef4444;" onclick="deleteUser(${user.id}, '${escapeHtml(user.email)}')">
-                            🗑️
+                            <i data-lucide="trash-2" style="width:12px; height:12px;"></i>
                         </button>
                     </div>
                 </td>
             </tr>
         `;
     }).join("");
+    refreshIcons();
 }
 
 function getStatusBadge(status) {
     switch (status) {
         case "pending":
-            return `<span class="badge badge-pending">⏳ Pending</span>`;
+            return `<span class="badge badge-pending" style="display:inline-flex; align-items:center; gap:4px;"><i data-lucide="clock" style="width:11px; height:11px;"></i> Pending</span>`;
         case "active":
-            return `<span class="badge badge-active">🟢 Active</span>`;
+            return `<span class="badge badge-active" style="display:inline-flex; align-items:center; gap:4px;"><i data-lucide="check-circle-2" style="width:11px; height:11px;"></i> Active</span>`;
         case "expired":
-            return `<span class="badge badge-expired">🛑 Expired</span>`;
+            return `<span class="badge badge-expired" style="display:inline-flex; align-items:center; gap:4px;"><i data-lucide="alert-triangle" style="width:11px; height:11px;"></i> Expired</span>`;
         case "suspended":
-            return `<span class="badge badge-suspended">⏸️ Suspended</span>`;
+            return `<span class="badge badge-suspended" style="display:inline-flex; align-items:center; gap:4px;"><i data-lucide="pause-circle" style="width:11px; height:11px;"></i> Suspended</span>`;
         default:
             return `<span class="badge">${status}</span>`;
     }
@@ -408,7 +442,7 @@ function formatPlanName(plan) {
         case "7_days": return "7 Days Trial";
         case "1_month": return "1 Month";
         case "1_year": return "1 Year";
-        case "lifetime": return "👑 Lifetime";
+        case "lifetime": return "Lifetime Pro";
         case "custom": return "Custom Plan";
         default: return "None";
     }
@@ -416,7 +450,7 @@ function formatPlanName(plan) {
 
 function formatExpiry(expires_at, plan_type) {
     if (plan_type === "lifetime") {
-        return `<span class="text-emerald" style="font-weight:600;">👑 Never (Lifetime)</span>`;
+        return `<span class="text-emerald" style="font-weight:600; display:inline-flex; align-items:center; gap:4px;"><i data-lucide="infinity" style="width:14px; height:14px;"></i> Lifetime</span>`;
     }
     if (!expires_at) return `<span style="color:var(--text-dim);">-</span>`;
     
@@ -430,9 +464,9 @@ function formatExpiry(expires_at, plan_type) {
     } else if (diffDays === 0) {
         return `<span class="text-amber">Expires today</span>`;
     } else if (diffDays <= 7) {
-        return `<span class="text-amber"><strong>${diffDays} days left</strong> (${expDate.toLocaleDateString()})</span>`;
+        return `<span class="text-amber"><strong>${diffDays} days left</strong></span>`;
     } else {
-        return `<span>${diffDays} days left (${expDate.toLocaleDateString()})</span>`;
+        return `<span>${diffDays} days left</span>`;
     }
 }
 
@@ -440,7 +474,7 @@ function formatHwid(hwid) {
     if (!hwid) {
         return `<span class="hwid-unbound">Not Bound Yet</span>`;
     }
-    return `<span class="hwid-badge" title="${escapeHtml(hwid)}">🔒 ${escapeHtml(hwid)}</span>`;
+    return `<span class="hwid-badge" title="${escapeHtml(hwid)}"><i data-lucide="lock" style="width:11px; height:11px; margin-right:4px;"></i>${escapeHtml(hwid)}</span>`;
 }
 
 function formatTimeAgo(isoString) {
@@ -456,13 +490,16 @@ function formatTimeAgo(isoString) {
     return `${days}d ago`;
 }
 
-function openApproveModal(userId, email) {
+function openApproveModal(userId, email, fullName = "", hwid = "", currentPlan = "lifetime") {
     targetUserIdToApprove = userId;
     modalUserEmail.textContent = email;
-    adminNote.value = "";
+    modalUserName.textContent = fullName || "Not set";
+    modalUserHwid.textContent = hwid || "Not bound yet";
+    adminNotes.value = "";
     customDateGroup.classList.add("hidden");
-    document.querySelector("input[name='planDuration'][value='1_month']").checked = true;
+    planSelect.value = currentPlan && currentPlan !== "none" ? currentPlan : "lifetime";
     approveModal.classList.remove("hidden");
+    refreshIcons();
 }
 
 function closeApproveModal() {
@@ -507,14 +544,13 @@ async function deleteUser(userId, email) {
 }
 
 function showToast(msg, type = "info") {
-    const container = document.getElementById("toastContainer");
-    const toast = document.createElement("div");
-    toast.className = `toast toast-${type}`;
-    toast.textContent = msg;
-    container.appendChild(toast);
+    let container = document.getElementById("toastNotification");
+    if (!container) return;
+    container.textContent = msg;
+    container.className = `toast toast-${type}`;
+    container.classList.remove("hidden");
     setTimeout(() => {
-        toast.style.opacity = "0";
-        setTimeout(() => toast.remove(), 300);
+        container.classList.add("hidden");
     }, 3500);
 }
 
