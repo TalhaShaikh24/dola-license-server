@@ -1,0 +1,18 @@
+.venv/
+build/
+dist/
+__pycache__/
+*.mp4
+*.mkv
+*.avi
+*.db
+crash_log.txt
+.license_session.json
+remover.py
+video_combiner.py
+ui.py
+combiner_widgets.py
+test_remover.py
+tests/
+Dola AI Watermark Remover.spec
+requirements.txt
