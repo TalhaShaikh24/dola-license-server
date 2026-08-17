@@ -22,6 +22,7 @@ from database import (
     update_login_and_hwid,
     verify_admin,
     update_admin_password,
+    verify_password,
     set_user_verification_otp,
     verify_user_email_otp,
     set_password_reset_otp,
