@@ -918,6 +918,12 @@ class AuthDialog(QDialog):
 
         if success:
             email = self.reg_email.text().strip()
+            # Clear registration form
+            self.reg_name.clear()
+            self.reg_email.clear()
+            self.reg_pwd.clear()
+            self.register_banner.hide()
+
             # Open OTP verification dialog directly
             v_dlg = VerifyEmailDialog(email, self)
             v_dlg.exec()
