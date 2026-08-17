@@ -316,25 +316,21 @@ class ROISelectionCanvas(QWidget):
         if self.roi_rect["width"] == 0 or self.roi_rect["height"] == 0 or \
            self.roi_rect["ref_width"] != w or self.roi_rect["ref_height"] != h:
             
-            # Smart Aspect-Ratio Auto-Alignment using exact coordinates:
-            # 16:9 Landscape base: 1280x720 -> X:1105, Y:648, W:165, H:57
-            # 9:16 Portrait base:  720x1280 -> X:584,  Y:1200, W:165, H:44
+            # Exact user-specified default positions:
+            # 16:9 Landscape: X:1105, Y:648, W:165, H:57
+            # 9:16 Portrait:  X:584,  Y:1200, W:165, H:44
             if h > w:
-                # 9:16 Portrait (Reels / TikTok / Shorts)
-                scale_x = w / 720.0
-                scale_y = h / 1280.0
-                bw = max(10, int(165 * scale_x))
-                bh = max(10, int(44 * scale_y))
-                bx = max(0, min(int(584 * scale_x), w - bw))
-                by = max(0, min(int(1200 * scale_y), h - bh))
+                # 9:16 Portrait
+                bw = min(165, w)
+                bh = min(44, h)
+                bx = max(0, min(584, w - bw))
+                by = max(0, min(1200, h - bh))
             else:
-                # 16:9 Landscape (Standard / YouTube)
-                scale_x = w / 1280.0
-                scale_y = h / 720.0
-                bw = max(10, int(165 * scale_x))
-                bh = max(10, int(57 * scale_y))
-                bx = max(0, min(int(1105 * scale_x), w - bw))
-                by = max(0, min(int(648 * scale_y), h - bh))
+                # 16:9 Landscape
+                bw = min(165, w)
+                bh = min(57, h)
+                bx = max(0, min(1105, w - bw))
+                by = max(0, min(648, h - bh))
             
             self.roi_rect = {
                 "x": bx,
@@ -351,12 +347,10 @@ class ROISelectionCanvas(QWidget):
     def apply_16_9_preset(self):
         w = self.raw_image_width
         h = self.raw_image_height
-        scale_x = w / 1280.0
-        scale_y = h / 720.0
-        bw = max(10, int(165 * scale_x))
-        bh = max(10, int(57 * scale_y))
-        bx = max(0, min(int(1105 * scale_x), w - bw))
-        by = max(0, min(int(648 * scale_y), h - bh))
+        bw = min(165, w)
+        bh = min(57, h)
+        bx = max(0, min(1105, w - bw))
+        by = max(0, min(648, h - bh))
         self.roi_rect = {
             "x": bx, "y": by, "width": bw, "height": bh,
             "ref_width": w, "ref_height": h
@@ -367,12 +361,10 @@ class ROISelectionCanvas(QWidget):
     def apply_9_16_preset(self):
         w = self.raw_image_width
         h = self.raw_image_height
-        scale_x = w / 720.0
-        scale_y = h / 1280.0
-        bw = max(10, int(165 * scale_x))
-        bh = max(10, int(44 * scale_y))
-        bx = max(0, min(int(584 * scale_x), w - bw))
-        by = max(0, min(int(1200 * scale_y), h - bh))
+        bw = min(165, w)
+        bh = min(44, h)
+        bx = max(0, min(584, w - bw))
+        by = max(0, min(1200, h - bh))
         self.roi_rect = {
             "x": bx, "y": by, "width": bw, "height": bh,
             "ref_width": w, "ref_height": h
