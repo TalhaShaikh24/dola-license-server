@@ -11,3 +11,5 @@ crash_log.txt
 .license_session.json
 
 .vercel
+config.bat
+node_modules
