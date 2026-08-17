@@ -922,89 +922,12 @@ class MainWindow(QMainWindow):
         sc_layout.addWidget(self.stacked_inputs)
 
         # --- Watermark Settings Group (Visible in Single & Batch modes) ---
-        self.grp_settings = QGroupBox("Removal Configuration & Coordinates")
+        self.grp_settings = QGroupBox("Removal Configuration")
         settings_grid = QGridLayout(self.grp_settings)
         settings_grid.setSpacing(10)
         settings_grid.setContentsMargins(10, 16, 10, 12)
 
-        # Live Coordinates Card (Requested by User)
-        self.coord_card = QFrame()
-        self.coord_card.setObjectName("coordBox")
-        coord_layout = QVBoxLayout(self.coord_card)
-        coord_layout.setContentsMargins(10, 8, 10, 8)
-        coord_layout.setSpacing(4)
-
-        h_coord_title = QHBoxLayout()
-        lbl_c_title = QLabel("📍 Watermark Area (X, Y, Size):")
-        lbl_c_title.setFont(QFont("Segoe UI", 9, QFont.Weight.Bold))
-        lbl_c_title.setStyleSheet("color: #818cf8;")
-        self.lbl_aspect_ratio = QLabel("Ratio: -")
-        self.lbl_aspect_ratio.setStyleSheet("color: #94a3b8; font-size: 10px; font-weight: 600;")
-        h_coord_title.addWidget(lbl_c_title)
-        h_coord_title.addStretch()
-        h_coord_title.addWidget(self.lbl_aspect_ratio)
-        coord_layout.addLayout(h_coord_title)
-
-        self.lbl_live_coords = QLabel("X: 0 px  |  Y: 0 px  |  W: 0 px  |  H: 0 px")
-        self.lbl_live_coords.setFont(QFont("Consolas", 9, QFont.Weight.Bold))
-        self.lbl_live_coords.setStyleSheet("color: #38bdf8;")
-        coord_layout.addWidget(self.lbl_live_coords)
-
-        # Precise SpinBox Inputs for X, Y, W, H
-        grid_spins = QGridLayout()
-        grid_spins.setSpacing(6)
-        
-        grid_spins.addWidget(QLabel("X:"), 0, 0)
-        self.spin_x = QSpinBox()
-        self.spin_x.setRange(0, 7680)
-        self.spin_x.setStyleSheet("background: #0f172a; border: 1px solid rgba(255,255,255,0.15); border-radius: 4px; padding: 2px 4px; font-size: 11px;")
-        self.spin_x.valueChanged.connect(self.on_spin_coords_changed)
-        grid_spins.addWidget(self.spin_x, 0, 1)
-
-        grid_spins.addWidget(QLabel("Y:"), 0, 2)
-        self.spin_y = QSpinBox()
-        self.spin_y.setRange(0, 7680)
-        self.spin_y.setStyleSheet("background: #0f172a; border: 1px solid rgba(255,255,255,0.15); border-radius: 4px; padding: 2px 4px; font-size: 11px;")
-        self.spin_y.valueChanged.connect(self.on_spin_coords_changed)
-        grid_spins.addWidget(self.spin_y, 0, 3)
-
-        grid_spins.addWidget(QLabel("W:"), 1, 0)
-        self.spin_w = QSpinBox()
-        self.spin_w.setRange(8, 7680)
-        self.spin_w.setStyleSheet("background: #0f172a; border: 1px solid rgba(255,255,255,0.15); border-radius: 4px; padding: 2px 4px; font-size: 11px;")
-        self.spin_w.valueChanged.connect(self.on_spin_coords_changed)
-        grid_spins.addWidget(self.spin_w, 1, 1)
-
-        grid_spins.addWidget(QLabel("H:"), 1, 2)
-        self.spin_h = QSpinBox()
-        self.spin_h.setRange(8, 7680)
-        self.spin_h.setStyleSheet("background: #0f172a; border: 1px solid rgba(255,255,255,0.15); border-radius: 4px; padding: 2px 4px; font-size: 11px;")
-        self.spin_h.valueChanged.connect(self.on_spin_coords_changed)
-        grid_spins.addWidget(self.spin_h, 1, 3)
-
-        coord_layout.addLayout(grid_spins)
-
-        # Quick Preset Buttons
-        h_presets = QHBoxLayout()
-        btn_preset_16_9 = QPushButton("📐 Reset 16:9")
-        btn_preset_16_9.setProperty("class", "btn-subtle")
-        btn_preset_16_9.setStyleSheet("font-size: 10px; padding: 4px 6px; font-weight:700;")
-        btn_preset_16_9.setToolTip("Set to 16:9 default (X:1105, Y:648, W:165, H:57)")
-        btn_preset_16_9.clicked.connect(lambda: self.canvas.apply_16_9_preset())
-
-        btn_preset_9_16 = QPushButton("📱 Reset 9:16")
-        btn_preset_9_16.setProperty("class", "btn-subtle")
-        btn_preset_9_16.setStyleSheet("font-size: 10px; padding: 4px 6px; font-weight:700;")
-        btn_preset_9_16.setToolTip("Set to 9:16 default (X:576, Y:1200, W:128, H:44)")
-        btn_preset_9_16.clicked.connect(lambda: self.canvas.apply_9_16_preset())
-
-        h_presets.addWidget(btn_preset_16_9)
-        h_presets.addWidget(btn_preset_9_16)
-        coord_layout.addLayout(h_presets)
-
-        settings_grid.addWidget(self.coord_card, 0, 0, 1, 2)
-
-        settings_grid.addWidget(QLabel("Color Threshold:"), 1, 0)
+        settings_grid.addWidget(QLabel("Color Threshold:"), 0, 0)
         self.slider_thresh = QSlider(Qt.Orientation.Horizontal)
         self.slider_thresh.setRange(100, 255)
         self.slider_thresh.setValue(200)
@@ -1015,10 +938,10 @@ class MainWindow(QMainWindow):
         h_thresh = QHBoxLayout()
         h_thresh.addWidget(self.slider_thresh)
         h_thresh.addWidget(self.lbl_thresh_val)
-        settings_grid.addLayout(h_thresh, 1, 1)
+        settings_grid.addLayout(h_thresh, 0, 1)
 
-        # Dilation Size (Default set to 6 as requested)
-        settings_grid.addWidget(QLabel("Dilation Size:"), 2, 0)
+        # Dilation Size (Default set to 6)
+        settings_grid.addWidget(QLabel("Dilation Size:"), 1, 0)
         self.slider_dilation = QSlider(Qt.Orientation.Horizontal)
         self.slider_dilation.setRange(0, 15)
         self.slider_dilation.setValue(6)
@@ -1029,10 +952,10 @@ class MainWindow(QMainWindow):
         h_dil = QHBoxLayout()
         h_dil.addWidget(self.slider_dilation)
         h_dil.addWidget(self.lbl_dilation_val)
-        settings_grid.addLayout(h_dil, 2, 1)
+        settings_grid.addLayout(h_dil, 1, 1)
 
-        # Inpaint Radius (Default set to 6 as requested)
-        settings_grid.addWidget(QLabel("Inpaint Radius:"), 3, 0)
+        # Inpaint Radius (Default set to 6)
+        settings_grid.addWidget(QLabel("Inpaint Radius:"), 2, 0)
         self.slider_radius = QSlider(Qt.Orientation.Horizontal)
         self.slider_radius.setRange(1, 20)
         self.slider_radius.setValue(6)
@@ -1043,30 +966,30 @@ class MainWindow(QMainWindow):
         h_rad = QHBoxLayout()
         h_rad.addWidget(self.slider_radius)
         h_rad.addWidget(self.lbl_radius_val)
-        settings_grid.addLayout(h_rad, 3, 1)
+        settings_grid.addLayout(h_rad, 2, 1)
 
-        settings_grid.addWidget(QLabel("Masking Mode:"), 4, 0)
+        settings_grid.addWidget(QLabel("Masking Mode:"), 3, 0)
         self.combo_mask_mode = QComboBox()
         self.combo_mask_mode.addItems(["Static Text", "Dynamic Text", "Full Box"])
         self.combo_mask_mode.currentIndexChanged.connect(self.on_mask_mode_changed)
-        settings_grid.addWidget(self.combo_mask_mode, 4, 1)
+        settings_grid.addWidget(self.combo_mask_mode, 3, 1)
 
-        settings_grid.addWidget(QLabel("Algorithm:"), 5, 0)
+        settings_grid.addWidget(QLabel("Algorithm:"), 4, 0)
         self.combo_method = QComboBox()
         self.combo_method.addItems(["Telea", "Navier-Stokes"])
-        settings_grid.addWidget(self.combo_method, 5, 1)
+        settings_grid.addWidget(self.combo_method, 4, 1)
 
-        settings_grid.addWidget(QLabel("CPU Threads:"), 6, 0)
+        settings_grid.addWidget(QLabel("CPU Threads:"), 5, 0)
         self.combo_threads = QComboBox()
         cores = os.cpu_count() or 4
         for i in range(1, cores + 1):
             self.combo_threads.addItem(str(i))
         self.combo_threads.setCurrentText(str(max(1, cores // 2)))
-        settings_grid.addWidget(self.combo_threads, 6, 1)
+        settings_grid.addWidget(self.combo_threads, 5, 1)
 
         self.chk_overwrite = QCheckBox("Overwrite Original File(s)")
         self.chk_overwrite.toggled.connect(self.on_overwrite_toggled)
-        settings_grid.addWidget(self.chk_overwrite, 7, 0, 1, 2)
+        settings_grid.addWidget(self.chk_overwrite, 6, 0, 1, 2)
         sc_layout.addWidget(self.grp_settings)
 
         # --- Video Combine Settings Group (Visible in Combine mode) ---
@@ -1282,50 +1205,7 @@ class MainWindow(QMainWindow):
             self.btn_browse_batch_out.setEnabled(not checked)
 
     def on_roi_changed(self):
-        r = self.canvas.roi_rect
-        self.lbl_live_coords.setText(f"X: {r['x']} px  |  Y: {r['y']} px  |  W: {r['width']} px  |  H: {r['height']} px")
-        
-        # Block signals to prevent recursive loops while updating spinboxes
-        self.spin_x.blockSignals(True)
-        self.spin_y.blockSignals(True)
-        self.spin_w.blockSignals(True)
-        self.spin_h.blockSignals(True)
-        
-        self.spin_x.setValue(int(r['x']))
-        self.spin_y.setValue(int(r['y']))
-        self.spin_w.setValue(int(r['width']))
-        self.spin_h.setValue(int(r['height']))
-        
-        self.spin_x.blockSignals(False)
-        self.spin_y.blockSignals(False)
-        self.spin_w.blockSignals(False)
-        self.spin_h.blockSignals(False)
-        
-        # Calculate aspect ratio
-        if self.preview_video_info:
-            vw = self.preview_video_info.get("width", 0)
-            vh = self.preview_video_info.get("height", 0)
-            if vw > 0 and vh > 0:
-                ratio_name = "9:16 Portrait" if vh > vw else "16:9 Landscape" if vw > vh else "1:1 Square"
-                self.lbl_aspect_ratio.setText(f"{vw}×{vh} ({ratio_name})")
-
-    def on_spin_coords_changed(self):
-        if not self.canvas:
-            return
-        w_max = self.canvas.raw_image_width
-        h_max = self.canvas.raw_image_height
-        
-        x = max(0, min(self.spin_x.value(), w_max - 8))
-        y = max(0, min(self.spin_y.value(), h_max - 8))
-        w = max(8, min(self.spin_w.value(), w_max - x))
-        h = max(8, min(self.spin_h.value(), h_max - y))
-        
-        self.canvas.roi_rect = {
-            "x": x, "y": y, "width": w, "height": h,
-            "ref_width": w_max, "ref_height": h_max
-        }
-        self.lbl_live_coords.setText(f"X: {x} px  |  Y: {y} px  |  W: {w} px  |  H: {h} px")
-        self.canvas.update()
+        pass
 
     def update_action_states(self):
         is_proc = self.is_processing()
@@ -1383,8 +1263,6 @@ class MainWindow(QMainWindow):
         self.canvas.pixmap = None
         self.canvas.image = None
         self.canvas.update()
-        self.lbl_live_coords.setText("X: 0 px  |  Y: 0 px  |  W: 0 px  |  H: 0 px")
-        self.lbl_aspect_ratio.setText("Ratio: -")
         
     def load_video_preview(self, path):
         try:
@@ -1397,7 +1275,6 @@ class MainWindow(QMainWindow):
             
             vw, vh = info.get('width', 0), info.get('height', 0)
             ratio_name = "9:16 Portrait" if vh > vw else "16:9 Landscape" if vw > vh else "1:1 Square"
-            self.lbl_aspect_ratio.setText(f"{vw}×{vh} ({ratio_name})")
             
             self.log(f"Preview frame loaded: {info['width']}x{info['height']} ({ratio_name}) @ {info['fps']:.2f}fps")
             self.lbl_hud_status.setText(f"Loaded: {os.path.basename(path)}")
