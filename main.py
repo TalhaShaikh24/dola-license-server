@@ -1,12 +1,21 @@
 import sys
+import os
 import traceback
 from PyQt6.QtWidgets import QApplication, QMessageBox, QDialog
+from PyQt6.QtGui import QIcon
 from ui import MainWindow
 from licensing.license_client import license_client
 from licensing.auth_dialog import AuthDialog
 
 def main():
     try:
+        # Set Windows AppUserModelID so taskbar displays custom icon properly
+        try:
+            import ctypes
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("TalhaShaikh.DolaAIWatermarkRemover.2.0")
+        except Exception:
+            pass
+
         # Create the Qt Application
         app = QApplication(sys.argv)
         
@@ -15,6 +24,11 @@ def main():
         app.setApplicationDisplayName("Dola AI Watermark Remover — Talha Shaikh")
         app.setOrganizationName("Talha Shaikh")
         app.setOrganizationDomain("talhashaikh.com")
+        
+        # Set Application & Window Icon
+        icon_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "app_icon.ico")
+        if os.path.exists(icon_path):
+            app.setWindowIcon(QIcon(icon_path))
         
         # Online License Verification on startup
         valid, msg, user_data = license_client.verify_current_session()

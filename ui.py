@@ -643,8 +643,13 @@ class CustomTitleBar(QWidget):
         layout.setSpacing(10)
 
         # App Icon & Title
-        icon_lbl = QLabel("✨")
-        icon_lbl.setStyleSheet("font-size: 16px;")
+        icon_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "app_icon.ico")
+        icon_lbl = QLabel()
+        if os.path.exists(icon_path):
+            pix = QPixmap(icon_path).scaled(22, 22, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+            icon_lbl.setPixmap(pix)
+        else:
+            icon_lbl.setText("✨")
         layout.addWidget(icon_lbl)
 
         title_lbl = QLabel("DOLA AI Watermark Remover & Video Combiner")

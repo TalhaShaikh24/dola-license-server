@@ -1,4 +1,5 @@
 import sys
+import os
 import webbrowser
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton,
@@ -6,7 +7,7 @@ from PyQt6.QtWidgets import (
     QSizePolicy, QGraphicsDropShadowEffect, QStackedWidget
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QThread, pyqtSlot, QPoint
-from PyQt6.QtGui import QFont, QColor, QIcon, QCursor, QClipboard
+from PyQt6.QtGui import QFont, QColor, QIcon, QCursor, QClipboard, QPixmap
 
 from licensing.license_client import license_client
 
@@ -217,8 +218,13 @@ class DialogTitleBar(QWidget):
         layout.setContentsMargins(14, 0, 8, 0)
         layout.setSpacing(8)
 
-        icon_lbl = QLabel("✨")
-        icon_lbl.setStyleSheet("font-size: 14px;")
+        icon_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "app_icon.ico")
+        icon_lbl = QLabel()
+        if os.path.exists(icon_path):
+            pix = QPixmap(icon_path).scaled(18, 18, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+            icon_lbl.setPixmap(pix)
+        else:
+            icon_lbl.setText("✨")
         layout.addWidget(icon_lbl)
 
         title_lbl = QLabel(title)
@@ -533,10 +539,19 @@ class AuthDialog(QDialog):
 
         # Header with Logo & Brand
         header_layout = QHBoxLayout()
-        brand_icon = QLabel("✨")
-        brand_icon.setFont(QFont("Segoe UI", 24))
+        header_layout.setSpacing(12)
+        
+        brand_icon = QLabel()
+        icon_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "app_icon.ico")
+        if os.path.exists(icon_path):
+            pix = QPixmap(icon_path).scaled(36, 36, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+            brand_icon.setPixmap(pix)
+        else:
+            brand_icon.setText("✨")
+            brand_icon.setFont(QFont("Segoe UI", 24))
         
         brand_info = QVBoxLayout()
+        brand_info.setSpacing(2)
         brand_title = QLabel("DOLA AI Watermark Remover")
         brand_title.setProperty("class", "title-label")
         brand_title.setFont(QFont("Segoe UI", 15, QFont.Weight.Bold))
