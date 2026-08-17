@@ -609,7 +609,7 @@ class MainWindow(QMainWindow):
     """
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Dola AI Watermark Remover & Video Combiner")
+        self.setWindowTitle("Dola AI Watermark Remover & Video Combiner — by Talha Shaikh (talhashaikh.com)")
         self.resize(1150, 720)
         self.setAcceptDrops(True)
         
@@ -650,7 +650,9 @@ class MainWindow(QMainWindow):
         brand_lbl.setStyleSheet("font-size: 20px; font-weight: 800; color: #5d5fef; letter-spacing: 1px; margin-bottom: 2px;")
         sidebar_layout.addWidget(brand_lbl)
         
-        sub_lbl = QLabel("Watermark Removal & Video Combiner")
+        sub_lbl = QLabel("Developed by <a href='https://talhashaikh.com' style='color:#a5b4fc; text-decoration:none; font-weight:bold;'>Talha Shaikh</a> &bull; <a href='https://talhashaikh.com' style='color:#6366f1; text-decoration:none;'>talhashaikh.com</a>")
+        sub_lbl.setTextFormat(Qt.TextFormat.RichText)
+        sub_lbl.setOpenExternalLinks(True)
         sub_lbl.setStyleSheet("color: #a0a0ba; font-size: 11px; margin-bottom: 8px;")
         sidebar_layout.addWidget(sub_lbl)
         

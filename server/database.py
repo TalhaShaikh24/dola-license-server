@@ -60,9 +60,27 @@ def init_db(db_path: Optional[str] = None):
                 created_at TEXT NOT NULL,
                 approved_at TEXT,
                 last_login_at TEXT,
-                notes TEXT
+                notes TEXT,
+                is_email_verified INTEGER DEFAULT 0,
+                verification_code TEXT,
+                verification_code_expires_at TEXT,
+                reset_code TEXT,
+                reset_code_expires_at TEXT
             )
         """)
+
+        # Migration helper for existing DBs
+        for col_def in [
+            ("is_email_verified", "INTEGER DEFAULT 0"),
+            ("verification_code", "TEXT"),
+            ("verification_code_expires_at", "TEXT"),
+            ("reset_code", "TEXT"),
+            ("reset_code_expires_at", "TEXT"),
+        ]:
+            try:
+                cursor.execute(f"ALTER TABLE users ADD COLUMN {col_def[0]} {col_def[1]}")
+            except Exception:
+                pass
         
         # Admin table
         cursor.execute("""
@@ -226,3 +244,88 @@ def update_admin_password(username: str, new_password_raw: str, db_path: Optiona
         cursor = conn.cursor()
         cursor.execute("UPDATE admins SET password_hash = ? WHERE username = ?", (new_hash, username.strip()))
         conn.commit()
+
+def set_user_verification_otp(user_id: int, otp_code: str, db_path: Optional[str] = None):
+    now = datetime.datetime.now(datetime.timezone.utc)
+    expires = (now + datetime.timedelta(minutes=15)).isoformat()
+    with get_connection(db_path) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "UPDATE users SET verification_code = ?, verification_code_expires_at = ? WHERE id = ?",
+            (otp_code, expires, user_id)
+        )
+        conn.commit()
+
+def verify_user_email_otp(email: str, otp_code: str, db_path: Optional[str] = None) -> tuple[bool, str]:
+    user = get_user_by_email(email, db_path)
+    if not user:
+        return False, "User not found"
+    if user.get("is_email_verified") == 1:
+        return True, "Email is already verified"
+    
+    code = user.get("verification_code")
+    expires_str = user.get("verification_code_expires_at")
+    
+    if not code or code.strip() != otp_code.strip():
+        return False, "Invalid verification code"
+        
+    if expires_str:
+        try:
+            expires_dt = datetime.datetime.fromisoformat(expires_str.replace("Z", "+00:00"))
+            if datetime.datetime.now(datetime.timezone.utc) > expires_dt:
+                return False, "Verification code has expired. Please request a new code."
+        except Exception:
+            pass
+            
+    with get_connection(db_path) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "UPDATE users SET is_email_verified = 1, verification_code = NULL, verification_code_expires_at = NULL WHERE id = ?",
+            (user["id"],)
+        )
+        conn.commit()
+    return True, "Email verified successfully!"
+
+def set_password_reset_otp(email: str, otp_code: str, db_path: Optional[str] = None) -> bool:
+    user = get_user_by_email(email, db_path)
+    if not user:
+        return False
+    now = datetime.datetime.now(datetime.timezone.utc)
+    expires = (now + datetime.timedelta(minutes=15)).isoformat()
+    with get_connection(db_path) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "UPDATE users SET reset_code = ?, reset_code_expires_at = ? WHERE id = ?",
+            (otp_code, expires, user["id"])
+        )
+        conn.commit()
+    return True
+
+def reset_password_with_otp(email: str, otp_code: str, new_password_raw: str, db_path: Optional[str] = None) -> tuple[bool, str]:
+    user = get_user_by_email(email, db_path)
+    if not user:
+        return False, "User not found"
+    
+    code = user.get("reset_code")
+    expires_str = user.get("reset_code_expires_at")
+    
+    if not code or code.strip() != otp_code.strip():
+        return False, "Invalid reset code"
+        
+    if expires_str:
+        try:
+            expires_dt = datetime.datetime.fromisoformat(expires_str.replace("Z", "+00:00"))
+            if datetime.datetime.now(datetime.timezone.utc) > expires_dt:
+                return False, "Reset code has expired. Please request a new code."
+        except Exception:
+            pass
+            
+    new_hash = hash_password(new_password_raw)
+    with get_connection(db_path) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "UPDATE users SET password_hash = ?, reset_code = NULL, reset_code_expires_at = NULL WHERE id = ?",
+            (new_hash, user["id"])
+        )
+        conn.commit()
+    return True, "Password reset successfully! You can now sign in with your new password."

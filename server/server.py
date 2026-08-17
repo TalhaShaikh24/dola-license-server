@@ -1,4 +1,5 @@
 import os
+import random
 import datetime
 import jwt
 from typing import Optional
@@ -20,8 +21,13 @@ from database import (
     delete_user,
     update_login_and_hwid,
     verify_admin,
-    verify_password
+    verify_password,
+    set_user_verification_otp,
+    verify_user_email_otp,
+    set_password_reset_otp,
+    reset_password_with_otp
 )
+from email_service import send_verification_email, send_password_reset_email
 
 JWT_SECRET = os.getenv("SAAS_JWT_SECRET", "dola_super_secret_license_signing_key_2026_x99")
 JWT_ALGORITHM = "HS256"
@@ -49,6 +55,21 @@ class RegisterRequest(BaseModel):
     password: str
     full_name: str
     hwid: Optional[str] = None
+
+class VerifyEmailRequest(BaseModel):
+    email: str
+    otp: str
+
+class ResendOtpRequest(BaseModel):
+    email: str
+
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+class ResetPasswordRequest(BaseModel):
+    email: str
+    otp: str
+    new_password: str
 
 class LoginRequest(BaseModel):
     email: str
@@ -129,12 +150,67 @@ def register_user(req: RegisterRequest):
         full_name=req.full_name,
         hwid=req.hwid
     )
+    
+    # Generate 6-digit OTP
+    otp = f"{random.randint(100000, 999999)}"
+    set_user_verification_otp(user["id"], otp)
+    
+    # Send verification email in background/sync
+    send_verification_email(email, req.full_name, otp)
+    
     return {
         "success": True,
-        "message": "Registration submitted successfully! Your account is awaiting Super Admin approval.",
+        "require_verification": True,
+        "message": f"Verification code sent to {email}. Please enter the 6-digit code to verify your account.",
         "user_id": user["id"],
         "status": "pending"
     }
+
+@app.post("/api/auth/verify-email")
+def verify_email(req: VerifyEmailRequest):
+    email = req.email.strip().lower()
+    success, msg = verify_user_email_otp(email, req.otp)
+    if not success:
+        return {"success": False, "message": msg}
+    return {
+        "success": True,
+        "message": "Email verified successfully! Your account is now pending Super Admin approval."
+    }
+
+@app.post("/api/auth/resend-otp")
+def resend_otp(req: ResendOtpRequest):
+    email = req.email.strip().lower()
+    user = get_user_by_email(email)
+    if not user:
+        raise HTTPException(status_code=404, detail="Account not found")
+    if user.get("is_email_verified") == 1:
+        return {"success": True, "message": "Email is already verified."}
+        
+    otp = f"{random.randint(100000, 999999)}"
+    set_user_verification_otp(user["id"], otp)
+    send_verification_email(email, user.get("full_name", ""), otp)
+    return {"success": True, "message": f"New verification code sent to {email}."}
+
+@app.post("/api/auth/forgot-password")
+def forgot_password(req: ForgotPasswordRequest):
+    email = req.email.strip().lower()
+    user = get_user_by_email(email)
+    if not user:
+        # Avoid user enumeration - return generic success
+        return {"success": True, "message": "If an account exists with this email, a reset code has been sent."}
+        
+    otp = f"{random.randint(100000, 999999)}"
+    set_password_reset_otp(email, otp)
+    send_password_reset_email(email, user.get("full_name", ""), otp)
+    return {"success": True, "message": f"Password reset code sent to {email}."}
+
+@app.post("/api/auth/reset-password")
+def reset_password(req: ResetPasswordRequest):
+    email = req.email.strip().lower()
+    if len(req.new_password) < 6:
+        return {"success": False, "message": "New password must be at least 6 characters."}
+    success, msg = reset_password_with_otp(email, req.otp, req.new_password)
+    return {"success": success, "message": msg}
 
 @app.post("/api/auth/login")
 def login_user(req: LoginRequest):
@@ -143,6 +219,14 @@ def login_user(req: LoginRequest):
     
     if not user or not verify_password(req.password, user["password_hash"]):
         raise HTTPException(status_code=401, detail="Invalid email or password")
+        
+    # Check Email Verification
+    if user.get("is_email_verified") == 0:
+        return {
+            "success": False,
+            "error": "email_not_verified",
+            "message": "Your email address is not verified yet. Please enter the verification code sent to your email."
+        }
         
     # Check Approval Status
     if user["status"] == "pending":

@@ -11,9 +11,10 @@ def main():
         app = QApplication(sys.argv)
         
         # Configure app metadata
-        app.setApplicationName("Dola AI Watermark Remover")
-        app.setApplicationDisplayName("Dola AI Watermark Remover")
-        app.setOrganizationName("Dola AI Tools")
+        app.setApplicationName("Dola AI Watermark Remover by Talha Shaikh")
+        app.setApplicationDisplayName("Dola AI Watermark Remover — Talha Shaikh")
+        app.setOrganizationName("Talha Shaikh")
+        app.setOrganizationDomain("talhashaikh.com")
         
         # Online License Verification on startup
         valid, msg, user_data = license_client.verify_current_session()

@@ -155,6 +155,42 @@ class LicenseClient:
         except Exception as e:
             return False, f"Verification failed: {str(e)}", None
 
+    def verify_email(self, email: str, otp: str) -> Tuple[bool, str]:
+        url = f"{self.server_url}/api/auth/verify-email"
+        try:
+            res = requests.post(url, json={"email": email.strip(), "otp": otp.strip()}, timeout=10)
+            data = res.json()
+            return data.get("success", False), data.get("message", "Verification failed")
+        except Exception as e:
+            return False, f"Verification error: {str(e)}"
+
+    def resend_otp(self, email: str) -> Tuple[bool, str]:
+        url = f"{self.server_url}/api/auth/resend-otp"
+        try:
+            res = requests.post(url, json={"email": email.strip()}, timeout=10)
+            data = res.json()
+            return data.get("success", False), data.get("message", "Failed to resend code")
+        except Exception as e:
+            return False, f"Network error: {str(e)}"
+
+    def forgot_password(self, email: str) -> Tuple[bool, str]:
+        url = f"{self.server_url}/api/auth/forgot-password"
+        try:
+            res = requests.post(url, json={"email": email.strip()}, timeout=10)
+            data = res.json()
+            return data.get("success", False), data.get("message", "Failed to send reset code")
+        except Exception as e:
+            return False, f"Network error: {str(e)}"
+
+    def reset_password(self, email: str, otp: str, new_password: str) -> Tuple[bool, str]:
+        url = f"{self.server_url}/api/auth/reset-password"
+        try:
+            res = requests.post(url, json={"email": email.strip(), "otp": otp.strip(), "new_password": new_password}, timeout=10)
+            data = res.json()
+            return data.get("success", False), data.get("message", "Password reset failed")
+        except Exception as e:
+            return False, f"Network error: {str(e)}"
+
     def get_plan_display(self) -> str:
         if not self.user_data:
             return "No Active License"
